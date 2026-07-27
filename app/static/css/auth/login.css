@@ -1,12 +1,17 @@
 /* File: app/static/css/auth/login.css */
 /* Author: Laura Sanz Lobo */
 
+/* Prevent pull-to-refresh behavior on mobile */
+html {
+    overscroll-behavior-y: none; 
+}
+
 /* Background */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
     background: #2596be;
-    height: 100vh;
+    min-height: 100dvh;
     display: flex;
     justify-content: center;
     align-items: center;
