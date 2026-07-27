@@ -1,0 +1,165 @@
+<!-- File: app/templates/admin/user_list.html -->
+<!-- Author: Laura Sanz Lobo -->
+{% extends "main/base.html" %}
+
+{% block header %}
+    Gestión de Usuarios
+{% endblock %}
+
+{% block extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/user_list.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="filter-bar">
+        <div class="filter-group">
+            <a href="{{ url_for('admin.user_list') }}" 
+               class="btn-filter {% if not current_filter and not request.args.get('q') %}active{% endif %}">
+               Todos
+            </a>
+
+            <a href="{{ url_for('admin.user_list_filter', worker_type='site') }}" 
+               class="btn-filter {% if current_filter == 'site' %}active{% endif %}">
+               Obra
+            </a>
+            
+            <a href="{{ url_for('admin.user_list_filter', worker_type='office') }}" 
+               class="btn-filter {% if current_filter == 'office' %}active{% endif %}">
+               Oficina
+            </a>
+        </div>
+
+        <div class="search-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="userSearchInput" class="search-input" 
+                   placeholder="Buscar por nombre o DNI..." autocomplete="off">
+        </div>  
+
+        <a href="{{ url_for('admin.create_user') }}" class="btn-new">
+            + Nuevo Usuario
+        </a>
+    </div>
+
+    {% block flash_messages %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endblock %}
+
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>DNI</th>
+                <th>Usuario</th>
+                <th>Tipo</th>
+                <th>Alta</th>
+                <th>Baja</th> 
+                <th>Admin</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td data-label="Nombre" style="text-align: left; font-weight: bold;">
+                    {{ user.full_name }}
+                </td>
+                <td data-label="DNI">{{ user.national_id }}</td>
+                <td data-label="Usuario">{{ user.username }}</td>
+                <td data-label="Tipo">
+                    {% if user.worker_type == 'office' %}
+                        <span class="tag tag-office">Oficina</span>
+                    {% else %}
+                        <span class="tag tag-site">Obra</span>
+                    {% endif %}
+                </td>
+                <td data-label="Alta">{{ user.start_date.strftime('%d-%m-%Y') if user.start_date else '-' }}</td>
+                <td data-label="Baja">
+                    {% if user.end_date %}
+                        <span style="color: #dc3545; font-weight: bold;">
+                            {{ user.end_date.strftime('%d-%m-%Y') }}
+                        </span>
+                    {% else %}
+                        <span style="color: #28a745;">Activo</span>
+                    {% endif %}
+                </td>
+                <td data-label="Admin">{{ 'Sí' if user.is_admin else 'No' }}</td>
+                
+                <td class="col-actions" data-label="Acciones">
+                    <div class="actions-wrapper">
+                        <a href="{{ url_for('admin.edit_user', user_id=user.id, back=request.full_path) }}"
+                        class="btn-delete-edit">
+                        Editar
+                        </a>
+
+                        <a href="{{ url_for('main.select_month', user_id=user.id, origin='admin') }}" class="btn-delete-edit">
+                            Informe
+                        </a>
+                        
+                        {% if session['user_id'] != user.id %}
+                        <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" onclick="return confirm('¿Eliminar usuario?')"
+                            class="btn-delete-edit" style="background-color: #dc3545;">Eliminar</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="padding: 20px;">No hay usuarios con este filtro.</td>
+            </tr>
+            {% endfor %}
+            
+        </tbody>
+    </table>
+    
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("userSearchInput");
+    
+    searchInput.addEventListener("keyup", function() {
+        const filterText = searchInput.value.toLowerCase();
+        const table = document.querySelector(".user-table tbody");
+        const rows = table.getElementsByTagName("tr");
+
+        for (let i = 0; i < rows.length; i++) {
+            // Skip the "No users found" row if it exists
+            if (rows[i].cells.length < 2) continue;
+
+            // Column 0: Name, Column 1: DNI, Column 2: Username
+            const tdName = rows[i].getElementsByTagName("td")[0];
+            const tdDni = rows[i].getElementsByTagName("td")[1];
+            const tdUser = rows[i].getElementsByTagName("td")[2];
+
+            if (tdName && tdDni) {
+                const textName = tdName.textContent || tdName.innerText;
+                const textDni = tdDni.textContent || tdDni.innerText;
+                const textUser = tdUser.textContent || tdUser.innerText;
+
+                // Show (display: "") if match is found, else hide (none)
+                if (textName.toLowerCase().indexOf(filterText) > -1 || 
+                    textDni.toLowerCase().indexOf(filterText) > -1 || 
+                    textUser.toLowerCase().indexOf(filterText) > -1) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        }
+    });
+});
+</script>
+
+{% endblock %}

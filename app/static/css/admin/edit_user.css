@@ -1,0 +1,123 @@
+/* File: app/static/css/admin/edit_user.css */
+/* Author: Laura Sanz Lobo */
+
+/* Form styles */
+.form-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    width: 400px;
+    margin: 20px auto;
+    margin-top: 60px;
+}
+
+.form-container h2 {
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 20px;
+    color: #333;
+}
+
+/* Input group style */
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group i {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #888;
+}
+
+.input-group input {
+    width: 100%; /* Space for the icon */
+    padding: 10px;
+    padding-left: 40px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 14px;
+    box-sizing: border-box; /* Ensures padding doesn't expand the input */
+}
+
+.btn-group {
+  display: flex;
+  justify-content: center;      /* Centers buttons horizontally */
+  gap: 10px;                    /* Space between them */
+  margin-top: 1rem;             /* Optional top spacing */
+}
+
+.btn {
+  display: flex;
+  align-items: center;          /* ← centers vertically */
+  justify-content: center;      /* ← centers horizontally */
+  width: 150px;                 /* Same width for both buttons */
+  padding: 10px;
+  text-align: center;
+  text-decoration: none;
+  line-height: normal;
+  font-family: inherit;
+  font-size: inherit;
+  border-radius: 5px;
+  cursor: pointer;
+  background: #f59e0b;
+  color: white;
+  border: none;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background: #c56e00;
+}
+
+/* Checkbox style */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-group label {
+    font-size: 14px;
+    color: #333;
+}
+
+/* Select container style */
+.select-group {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-bottom: 15px;
+}
+
+/* Icon inside select */
+.select-group i {
+    position: absolute;
+    left: 10px;
+    color: #ccc;
+    font-size: 14px;
+    pointer-events: none;
+}
+
+/* Select */
+.select-group select {
+    width: 100%;
+    padding: 10px 10px 10px 35px;
+    font-size: 14px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+/* Hover and focus effect for select */
+.select-group select:hover,
+.select-group select:focus {
+    border-color: #f59e0b;
+    outline: none;
+    box-shadow: 0 0 5px rgba(37, 117, 252, 0.5);
+}
