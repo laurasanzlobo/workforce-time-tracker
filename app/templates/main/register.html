@@ -1,0 +1,423 @@
+<!-- File: app/templates/main/register.html -->
+<!-- Author: Laura Sanz Lobo -->
+{% extends "main/base.html" %}
+{% set logo_header = true %}
+{% block header %}
+  <img 
+    src="{{ url_for('static', filename='img/logo_real.jpg') }}" 
+    onerror="this.onerror=null; this.src='{{ url_for('static', filename='img/logo_placeholder.jpg') }}'" 
+    alt="Logo" 
+    class="logo"
+  >
+{% endblock %}
+
+{% block extra_styles %}
+    <!-- FullCalendar -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- (Optional) jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- My custom CSS files -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main/register.css') }}">
+    
+    <script>window.AUTOFILL_TIME = true;</script>
+{% endblock %}
+
+{% block content %}
+
+  <!-- Calendar Section -->
+  <section id="calendar-section">
+    <!-- Flash Messages on the main page -->
+    {% block flash_messages %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endblock %}
+    <div id="calendar"></div>
+  </section>
+
+  <div class="button-box">
+    <a href="{{ url_for('main.select_month') }}" class="btn">Generar Informe</a>
+    {% if is_admin %}
+    <a href="{{ url_for('admin.admin_panel') }}" class="btn">Panel de Administración</a>
+    {% endif %}
+  </div>
+  
+  <!-- Custom Modal with the complete form -->
+  <div id="customModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="date-title">{{ day_label }}{{ formatted_date }}</h2>
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+      </div>
+
+      <form id="recordForm" action="{{ url_for('main.register') }}" method="POST">
+        <input type="hidden" name="date" id="dateInput" value="{{ original_date }}">
+
+        <!-- Day type -->
+        <div class="form-group">
+          <div class="day-type-options">
+              <label>
+                  <input type="radio" name="day_type" value="vacation" class="day-type-radio"> Vacaciones
+              </label>
+              <label>
+                  <input type="radio" name="day_type" value="sick_leave" class="day-type-radio"> Baja Médica
+              </label>
+              <label>
+                  <input type="radio" name="day_type" value="other_reasons" class="day-type-radio"> Otros Motivos
+              </label>
+          </div>
+        </div>
+        
+        <!-- Office Worker -->
+      {% if worker_type == 'office' %}
+      <div class="form-group">
+        <div class="time-row">
+          <label class="block-label">Mañana:</label>
+          <input type="text" id="clock_in" class="flatpickr-time" name="clock_in"
+                placeholder="Entrada" autocomplete="off"
+                value="{{ current_record.clock_in.strftime('%H:%M') if current_record and current_record.clock_in }}">
+          <input type="text" id="clock_out" class="flatpickr-time" name="clock_out"
+                placeholder="Salida" autocomplete="off"
+                value="{{ current_record.clock_out.strftime('%H:%M') if current_record and current_record.clock_out }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="time-row">
+          <label class="block-label">Tarde:</label>
+          <input type="text" id="clock_in_afternoon" class="flatpickr-time" name="clock_in_afternoon"
+                placeholder="Entrada" autocomplete="off"
+                value="{{ current_record.clock_in_afternoon.strftime('%H:%M') if current_record and current_record.clock_in_afternoon }}">
+          <input type="text" id="clock_out_afternoon" class="flatpickr-time" name="clock_out_afternoon"
+                placeholder="Salida" autocomplete="off"
+                value="{{ current_record.clock_out_afternoon.strftime('%H:%M') if current_record and current_record.clock_out_afternoon }}">
+        </div>
+      </div>
+
+        <!-- Site Worker -->
+        {% elif worker_type == 'site' %}
+          <!-- Clock in time -->
+          <div class="form-group">
+            <div class="time-row time-row--1col">
+              <label class="block-label" for="clock_in">Hora de entrada:</label>
+              <input  type="text"
+                      id="clock_in"
+                      class="flatpickr-time"
+                      name="clock_in"
+                      autocomplete="off"
+                      value="{{ current_record.clock_in.strftime('%H:%M') if current_record and current_record.clock_in }}">
+            </div>
+          </div>
+        
+          <!-- Clock out time -->
+          <div class="form-group">
+            <div class="time-row time-row--1col">
+              <label class="block-label" for="clock_out">Hora de salida:</label>
+              <input  type="text"
+                      id="clock_out"
+                      class="flatpickr-time"
+                      name="clock_out"
+                      autocomplete="off"
+                      value="{{ current_record.clock_out.strftime('%H:%M') if current_record and current_record.clock_out }}">
+            </div>
+          </div>
+  
+        <div class="form-group">
+         <div class="site-row">
+          <label class="block-label" for="site_id">Obra:</label>
+          <select name="site_id" id="site_id">
+              {% for site in sites %}
+              <option value="{{ site.id }}" {% if current_record and current_record.site_id == site.id %}selected{% endif %}>
+                  {{ site.name }}
+              </option>
+              {% endfor %}
+          </select>
+          </div>
+      </div>
+    
+    <!-- Part-Time Worker -->
+    {% elif worker_type == 'part_time' %}
+      <div class="form-group">
+        <div class="time-row time-row--1col">
+          <label class="block-label" for="clock_in">Hora de entrada:</label>
+          <input  type="text"
+                  id="clock_in"
+                  class="flatpickr-time"
+                  name="clock_in"
+                  autocomplete="off"
+                  value="{{ current_record.clock_in.strftime('%H:%M') if current_record and current_record.clock_in }}">
+        </div>
+      </div>
+    
+      <div class="form-group">
+        <div class="time-row time-row--1col">
+          <label class="block-label" for="clock_out">Hora de salida:</label>
+          <input  type="text"
+                  id="clock_out"
+                  class="flatpickr-time"
+                  name="clock_out"
+                  autocomplete="off"
+                  value="{{ current_record.clock_out.strftime('%H:%M') if current_record and current_record.clock_out }}">
+        </div>
+      </div>
+    {% endif %}
+
+        <button type="submit">Guardar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  window.configOffice = {
+    summer_start: "{{ config_office.summer_start }}",  // format "dd-mm-yyyy"
+    summer_end: "{{ config_office.summer_end }}"
+  };
+</script>
+
+<script type="module">
+
+const $$ = s => document.querySelector(s);
+const $all = s => [...document.querySelectorAll(s)];
+
+/* =======  Nodes  ====================================================== */
+const dom = {
+  calendarEl:  $$('#calendar'),
+  clockIn:     $$('#clock_in'),
+  clockOut:    $$('#clock_out'),
+  clockInAft:  $$('#clock_in_afternoon'),
+  clockOutAft: $$('#clock_out_afternoon'),
+  radios:      $all('input[name="day_type"]'),
+  siteSel:     $$('#site_id'),
+  dateInput:   $$('#dateInput'),
+  title:       $$('#date-title'),
+  modal:       $$('#customModal')
+};
+
+/* =======  Utilities  ================================================ */
+const dateUtils = {
+  format(d) {
+    const [y,m,day] = d.split('-');
+    return `${day}-${m}-${y}`;
+  },
+  isFriday: d => new Date(d).getDay() === 5,
+  isWeekend: d => [0,6].includes(new Date(d).getDay())
+};
+
+function isHoliday(cal, isoDate) {
+  return cal.getEvents().some(ev =>
+    (ev.id?.startsWith('bg-holiday-') || ev.id?.startsWith('lbl-holiday-')) &&
+    ev.startStr.slice(0,10) === isoDate
+  );
+}
+
+function parseDateDMY(str) {
+  if (!str) return null;
+  const [d, m, y] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/* =======  Time‑pickers (initialized once)  =============================== */
+const pickers = {};
+function initTimePickers() {
+  ['clockIn','clockOut','clockInAft','clockOutAft'].forEach(key => {
+    const el = dom[key];
+    if (!el) return;
+    el.setAttribute('autocomplete', 'off');
+    pickers[key] = flatpickr(el, {
+      enableTime:true, noCalendar:true, dateFormat:'H:i',
+      time_24hr:true, allowInput:true, minuteIncrement:1,
+      onOpen: function(selectedDates, dateStr, instance) {
+        // If field is empty, set current time on open
+        if (!dateStr) {
+          instance.setDate(new Date(), false); // false = do not trigger change
+        }
+      }
+    });
+  });
+}
+function setTime(key, value) { pickers[key]?.setDate(value, false); }
+
+/* =======  Form Helpers  ===================================== */
+function setTimes(h='') {
+  ['clockIn','clockOut','clockInAft','clockOutAft'].forEach(k=>setTime(k,h));
+}
+
+function uncheckRadios() { dom.radios.forEach(r => r.checked = false); }
+
+function toggleAfternoonFields(hasAfternoon) {
+  ['clockInAft','clockOutAft'].forEach(k=>{
+     dom[k]?.parentElement.style.setProperty('display', hasAfternoon?'grid':'none');
+  });
+}
+
+function openModal() {
+    dom.modal && (dom.modal.style.display = 'flex');
+}
+
+function closeModal() {
+     dom.modal && (dom.modal.style.display = 'none');
+}
+window.openModal  = openModal;
+window.closeModal = closeModal;
+
+/* =======  "Day Type" Events  ================================== */
+dom.radios.forEach(radio => {
+  radio.addEventListener('click', e => {
+    const wasChecked = radio.dataset.checked === 'true';
+    dom.radios.forEach(r=>r.dataset.checked='false');
+
+    if (wasChecked) {
+      radio.checked = false;
+      setTimes();                     // reset to 00:00
+      uncheckRadios();
+      loadDefaultHours(dom.dateInput.value);
+    } else {
+      radio.dataset.checked='true';
+      setTimes();                     // always 00:00 when marking a special day
+    }
+  });
+});
+
+Object.values(pickers).forEach(p=>{
+  p?.input.addEventListener('input', uncheckRadios);
+});
+
+/* =======  Record Loading  ======================================== */
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
+  return r.json();
+}
+
+async function loadRecord(dateStr) {
+  setTimes();
+  uncheckRadios();
+  const workerType = document.body.dataset.worker_type;
+  const data = await fetchJSON(`/api/record/${dateStr}?type=${workerType}`);
+  fillForm(data, dateStr);
+  toggleAfternoonFields(data.has_afternoon);
+}
+
+async function loadDefaultHours(dateStr) {
+  const workerType = document.body.dataset.worker_type;
+  const data = await fetchJSON(`/api/default_hours?date=${dateStr}&type=${workerType}`);
+  fillForm(data, dateStr);
+}
+
+function fillForm(data, dateStr) {
+  setTime('clockIn', data.clock_in || '');
+  setTime('clockOut',  data.clock_out  || '');
+  setTime('clockInAft',    data.clock_in_afternoon || '');
+  setTime('clockOutAft',     data.clock_out_afternoon || '');
+
+  const workerType = document.body.dataset.worker_type;
+  
+  dom.modal.dataset.hasAfternoon = data.has_afternoon ? "true" : "false";
+  
+  toggleAfternoonFields(data.has_afternoon);
+
+  dom.radios.forEach(r => {
+      const type = data.day_type;
+      if (type) {
+        r.checked = r.value === type;
+        r.dataset.checked = r.checked;
+      } else {
+        r.checked = false;
+        r.dataset.checked = false;
+      }
+    });
+  
+  // If it's a site worker and there's a site select field
+  if (workerType === "site") {
+    const selectSite = document.getElementById("site_id");
+    if (selectSite && data.site_id) {
+      selectSite.value = data.site_id.toString();  // Ensure string type
+    }
+  }
+}
+
+/* =======  FullCalendar  ============================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  initTimePickers();
+
+  /* === 1. Create and configure FullCalendar ====================== */
+  const savedDate = dom.dateInput?.value;
+  const initialDate = savedDate ? savedDate : new Date().toISOString().split('T')[0];
+    const calendar = new FullCalendar.Calendar(dom.calendarEl, {
+      initialView: 'dayGridMonth',
+      initialDate: initialDate,
+      firstDay: 1,
+      locale: 'es',
+      height: 'auto',
+      contentHeight: 'auto',
+      aspectRatio: 1.2,
+      expandRows: true,
+      handleWindowResize: true,
+      selectable: true,
+      fixedWeekCount: false,
+      showNonCurrentDates: false,
+      headerToolbar: { left: 'prev', center: 'title', right: 'next' },
+      // ------------------------------------------------------------------
+    
+      /* Keep responsive logic ------------------------------ */
+      windowResize() {
+        const w = window.innerWidth;
+        calendar.setOption('dayMaxEventRows', w < 480 ? 1 : false);
+      },
+    
+      /* Data source -------------------------------------------- */
+      events: '/api/records',
+    
+      /* Day click -------------------------------------------- */
+      dateClick: function (info) {
+        const dateStr = info.dateStr;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); 
+        const selectedDate = new Date(dateStr);
+        selectedDate.setHours(0, 0, 0, 0);
+    
+        // Block weekends or holidays
+        if (dateUtils.isWeekend(dateStr) || isHoliday(calendar, dateStr)) {
+          alert('Este día no se puede modificar (festivo o fin de semana).');
+          return;
+        }
+        
+        // Block future days
+        if (selectedDate > today) {
+            alert('No puedes seleccionar un día posterior al actual.');
+            return;
+        }
+    
+        // Update UI
+        dom.dateInput.value  = dateStr;
+        dom.title.textContent = dateUtils.format(dateStr);
+    
+        // Load/create record and open modal
+        loadRecord(dateStr);
+        toggleAfternoonFields(dom.modal.dataset.hasAfternoon === "true");
+        openModal();
+      }
+    });
+    
+    /* === 2. Render the calendar ============================= */
+    calendar.render();
+    
+});
+
+</script>
+
+{% endblock %}

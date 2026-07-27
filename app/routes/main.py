@@ -30,7 +30,7 @@ def register():
 
     user = User.query.get(session["user_id"])
     if not user:
-        flash("User not found", "error")
+        flash("Usuario no encontrado.", "error")
         return redirect(url_for("auth.login"))
 
     is_admin = user.is_admin
@@ -55,11 +55,11 @@ def register():
         try:
             target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except ValueError:
-            flash("Invalid date format.", "error")
+            flash("Formato de fecha no válido.", "error")
             return redirect(url_for("main.register"))
 
         if Holiday.query.filter_by(date=target_date).first():
-            flash("Cannot save records on public holidays.", "error")
+            flash("No se pueden guardar registros en días festivos.", "error")
             return redirect(url_for("main.register", date=date_str))
 
         # Basic required hours validation
@@ -68,7 +68,7 @@ def register():
                  return redirect(url_for("main.register", date=date_str))
                  
              if (clock_in and not clock_out) or (not clock_in and clock_out):
-                  flash("You must provide both clock-in and clock-out times.", "error")
+                  flash("Debes indicar tanto la hora de entrada como la de salida.", "error")
                   return redirect(url_for("main.register", date=date_str))
 
         # Database save
@@ -87,7 +87,7 @@ def register():
 
         db.session.add(existing_record)
         db.session.commit()
-        flash("Record saved successfully.", "success")
+        flash("Registro guardado correctamente.", "success")
         return redirect(url_for("main.register", date=date_str))
 
     # --- GET LOGIC (INITIAL LOAD & AUTO-FILL) ---
@@ -216,7 +216,7 @@ def generate_pdf():
     year_param = request.args.get('year')
     
     if not month_param:
-        flash("You must select a month", "error")
+        flash("Debes seleccionar un mes.", "error")
         return redirect(url_for("main.select_month"))
     
     try:
@@ -233,7 +233,7 @@ def generate_pdf():
         return response
 
     except Exception as e:
-        flash(f"Error generating PDF: {e}", "error")
+        flash(f"Error al generar el PDF: {e}", "error")
         return redirect(url_for("main.select_month"))
 
 @main_bp.route('/send_pdf', methods=['GET'])
@@ -250,7 +250,7 @@ def send_pdf():
     
     cfg = EmailConfig.query.first()
     if not cfg or not (cfg.sender_email and cfg.sender_password and cfg.destination_email):
-        flash("Email configuration is incomplete.", "error")
+        flash("La configuración del correo está incompleta.", "error")
         return redirect(url_for("admin.admin_email"))
 
     # Dynamic reconfiguration of Flask-Mail
@@ -275,9 +275,9 @@ def send_pdf():
             args=(current_app._get_current_object(), msg)
         ).start()
         
-        flash("Report sent successfully.", "success")
+        flash("Informe enviado correctamente.", "success")
     except Exception as e:
-        flash(f"Error sending email: {e}", "error")
+        flash(f"Error al enviar el correo: {e}", "error")
 
     return redirect(url_for("main.select_month"))
 
@@ -295,7 +295,7 @@ def process_pdf():
         elif '-' in month_param: month, year = month_param.split('-')
         else: raise ValueError
     except:
-        flash("Incorrect format", "error")
+        flash("Formato incorrecto.", "error")
         return redirect(url_for('main.select_month'))
 
     if action == 'view':

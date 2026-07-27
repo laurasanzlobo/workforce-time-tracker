@@ -44,7 +44,7 @@ def create_user():
 
     # Protection: If an admin already exists, the user must be logged in as admin
     if admin_exists and "user_id" not in session:
-        flash("You must be an administrator to create new users.", "error")
+        flash("Debes ser administrador para crear nuevos usuarios.", "error")
         return redirect(url_for("auth.login"))
 
     if request.method == "POST":
@@ -59,11 +59,11 @@ def create_user():
         end_date_str = request.form.get("end_date")
 
         if not username or not password or not full_name or not national_id or not start_date_str:
-            flash("All fields are required except signature and end date.", "error")
+            flash("Todos los campos son obligatorios excepto la firma y la fecha de fin.", "error")
             return redirect(url_for("admin.create_user"))
         
         if worker_type not in ["office", "site", "part_time"]:
-            flash("Invalid worker type.", "error")
+            flash("Tipo de trabajador no válido.", "error")
             return redirect(url_for("admin.create_user"))
             
         start_date = datetime.strptime(start_date_str, "%d-%m-%Y").date() if start_date_str else date.today()
@@ -79,7 +79,7 @@ def create_user():
                 signature_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
                 signature_file.save(signature_path)
             else:
-                flash("Signature format not allowed.", "error")
+                flash("El formato de la firma no está permitido.", "error")
                 return redirect(url_for("admin.create_user"))
             
         try:
@@ -98,7 +98,7 @@ def create_user():
 
             db.session.add(new_user)
             db.session.commit()
-            flash("User successfully created.", "success")
+            flash("Usuario creado correctamente.", "success")
 
             # Auto-login if it's the first user in the system
             if not admin_exists:
@@ -109,10 +109,10 @@ def create_user():
 
         except IntegrityError:
             db.session.rollback()
-            flash("The username or National ID already exists.", "error")
+            flash("El nombre de usuario o el DNI ya existe.", "error")
             return redirect(url_for("admin.create_user"))
         except Exception as e:
-            flash(f"Unexpected error: {e}", "error")
+            flash(f"Error inesperado: {e}", "error")
             return redirect(url_for("admin.create_user"))
 
     return render_template("admin/create_user.html")
@@ -140,7 +140,7 @@ def edit_user(user_id):
             try:
                 user.start_date = datetime.strptime(start_date_str, "%d-%m-%Y").date()
             except ValueError:
-                flash("Invalid start date.", "error")
+                flash("Fecha de inicio no válida.", "error")
                 return redirect(request.url)
         
         end_date_str = request.form.get("end_date", "").strip()
@@ -156,7 +156,7 @@ def edit_user(user_id):
                     Record.date > new_end_date
                 ).delete(synchronize_session=False)
             except ValueError:
-                flash("Invalid end date.", "error")
+                flash("Fecha de fin no válida.", "error")
                 return redirect(request.url)
 
         # Signature update
@@ -168,16 +168,16 @@ def edit_user(user_id):
                 signature_file.save(signature_path)
                 user.signature = signature_path
             else:
-                flash("Incorrect signature format.", "error")
+                flash("Formato de firma incorrecto.", "error")
                 return redirect(request.url)
 
         try:
             db.session.commit()
-            flash("User updated.", "success")
+            flash("Usuario actualizado.", "success")
             return redirect(back_url)
         except IntegrityError:
             db.session.rollback()
-            flash("Duplicate username or National ID.", "error")
+            flash("El nombre de usuario o el DNI está duplicado.", "error")
             return redirect(request.url)
 
     return render_template("admin/edit_user.html", user=user, back_url=back_url)
@@ -188,11 +188,11 @@ def delete_user(user_id, worker_type):
     """Logical or physical deletion of a user."""
     user = User.query.get_or_404(user_id)
     if user.id == session["user_id"]:
-        flash("You cannot delete your own account.", "error")
+        flash("No puedes eliminar tu propia cuenta.", "error")
     else:
         db.session.delete(user)
         db.session.commit()
-        flash("User deleted.", "success")
+        flash("Usuario eliminado.", "success")
     
     # Dynamic redirection based on the origin list
     if worker_type == 'office': return redirect(url_for("admin.user_list_office"))
@@ -236,16 +236,16 @@ def admin_holidays():
         try:
             date_obj = datetime.strptime(date_str, "%d-%m-%Y").date()
             if Holiday.query.filter_by(date=date_obj).first():
-                flash("A holiday already exists on that date.", "error")
+                flash("Ya existe un festivo en esa fecha.", "error")
             else:
                 db.session.add(Holiday(date=date_obj, description=description))
                 db.session.commit()
-                flash("Holiday added.", "success")
+                flash("Festivo añadido.", "success")
         except ValueError:
-            flash("Invalid date format.", "error")
+            flash("Formato de fecha no válido.", "error")
         except IntegrityError:
             db.session.rollback()
-            flash("Database integrity error.", "error")
+            flash("Error de integridad en la base de datos.", "error")
         
         return redirect(url_for("admin.admin_holidays"))
 
@@ -258,7 +258,7 @@ def delete_holiday(holiday_id):
     holiday = Holiday.query.get_or_404(holiday_id)
     db.session.delete(holiday)
     db.session.commit()
-    flash("Holiday deleted.", "success")
+    flash("Festivo eliminado.", "success")
     return redirect(url_for("admin.admin_holidays"))
 
 # --- SITE MANAGEMENT ---
@@ -269,15 +269,15 @@ def admin_sites():
     if request.method == "POST":
         name = request.form.get("site_name", "").strip()
         if not name:
-            flash("Name cannot be empty.", "error")
+            flash("El nombre no puede estar vacío.", "error")
         else:
             try:
                 db.session.add(Site(name=name))
                 db.session.commit()
-                flash("Site added.", "success")
+                flash("Centro añadido.", "success")
             except IntegrityError:
                 db.session.rollback()
-                flash("Duplicate site name.", "error")
+                flash("Ya existe un centro con ese nombre.", "error")
         return redirect(url_for("admin.admin_sites"))
 
     sites = Site.query.order_by(Site.is_active.desc(), Site.name.asc()).all()
@@ -289,7 +289,7 @@ def delete_site(site_id):
     site = Site.query.get_or_404(site_id)
     db.session.delete(site)
     db.session.commit()
-    flash("Site deleted.", "success")
+    flash("Centro eliminado.", "success")
     return redirect(url_for("admin.admin_sites"))
 
 @admin_bp.route("/admin/sites/archive/<int:site_id>", methods=["POST"])
@@ -298,7 +298,7 @@ def archive_site(site_id):
     site = Site.query.get_or_404(site_id)
     site.is_active = False
     db.session.commit()
-    flash(f"Site '{site.name}' archived.", "success")
+    flash(f"Centro '{site.name}' archivado.", "success")
     return redirect(url_for("admin.admin_sites"))
 
 @admin_bp.route("/admin/sites/reactivate/<int:site_id>", methods=["POST"])
@@ -307,7 +307,7 @@ def reactivate_site(site_id):
     site = Site.query.get_or_404(site_id)
     site.is_active = True
     db.session.commit()
-    flash(f"Site '{site.name}' reactivated.", "success")
+    flash(f"Centro '{site.name}' reactivado.", "success")
     return redirect(url_for("admin.admin_sites"))
 
 @admin_bp.route("/admin/sites/edit/<int:site_id>", methods=["POST"])
@@ -315,17 +315,17 @@ def reactivate_site(site_id):
 def edit_site(site_id):
     new_name = request.form.get("new_name", "").strip()
     if not new_name:
-        flash("The name cannot be empty.", "error")
+        flash("El nombre no puede estar vacío.", "error")
         return redirect(url_for("admin.admin_sites"))
 
     site = Site.query.get_or_404(site_id)
     site.name = new_name
     try:
         db.session.commit()
-        flash("Name updated.", "success")
+        flash("Nombre actualizado.", "success")
     except IntegrityError:
         db.session.rollback()
-        flash("A site with that name already exists.", "error")
+        flash("Ya existe un centro con ese nombre.", "error")
     return redirect(url_for("admin.admin_sites"))
 
 # --- EMAIL AND SCHEDULE CONFIGURATION ---
@@ -344,7 +344,7 @@ def admin_email():
         config.sender_password = request.form.get("sender_password", "").strip()
         config.destination_email = request.form.get("destination_email", "").strip()
         db.session.commit()
-        flash("Configuration updated.", "success")
+        flash("Configuración actualizada.", "success")
         return redirect(url_for("admin.admin_email"))
     
     return render_template("admin/admin_email.html", config=config)
@@ -413,7 +413,7 @@ def manage_hours():
         c_site.out_friday_august = pt(request.form.get("out_friday_august_site"))
 
         db.session.commit()
-        flash("Schedules updated successfully.", "success")
+        flash("Los horarios se han actualizado correctamente.", "success")
         return redirect(url_for("admin.manage_hours"))
 
     fmt = "%d-%m-%Y"

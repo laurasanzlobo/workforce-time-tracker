@@ -30,7 +30,7 @@ def login():
             # Redirect to the 'main' blueprint, 'register' function
             return redirect(url_for("main.register"))
 
-        flash("Incorrect username or password.", "error")
+        flash("Nombre de usuario o contraseña incorrectos.", "error")
         return redirect(url_for("auth.login"))
 
     return render_template("auth/login.html")

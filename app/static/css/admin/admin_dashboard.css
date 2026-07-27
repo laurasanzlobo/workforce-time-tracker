@@ -1,0 +1,30 @@
+/* File: app/static/css/admin/admin_dashboard.css */
+/* Author: Laura Sanz Lobo */
+
+/* Center main content */
+.main-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: auto; /* Height to allow adjustment with margin */
+    margin-top: 50px; /* Top spacing for the whole section */
+}
+
+/* Main white card box */
+.admin-box {
+    width: 100%;
+    max-width: 20rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 15px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    margin-top: 50px; /* Top margin offset */
+}
+
+/* Button layout container */
+.button-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
