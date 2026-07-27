@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>{% block title %}Gestión Horaria{% endblock %}</title>
+    <title>{% block title %}Solensur{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main/base.css') }}">
 
     <!-- Flatpickr CSS -->
@@ -20,11 +20,11 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
     <link rel="manifest" href="{{ url_for('static', filename=manifest_file) }}">
-    <meta name="theme-color" content="#122668">
+    <meta name="theme-color" content="#f59e0b">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename=mobile_icon_file) }}">
-    <link rel="icon" href="{{ url_for('static', filename=favicon_file) }}" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='icons/real.ico') }}" type="image/x-icon">
     {% block extra_styles %}{% endblock %}
 </head>
 <body data-worker_type="{{ worker_type }}">
@@ -32,26 +32,38 @@
     <header>
       <div class="header-inner{% if logo_header %} logo-header{% endif %}">
     
-        {# — Close / Back button — #}
+        {# — Back / Close button — #}
         {% if request.endpoint != 'auth.login' %}
           {% if request.endpoint == 'main.register' %}
-            <a href="{{ url_for('auth.logout') }}" class="btn-back">Cerrar&nbsp;sesión</a>
+            <a href="{{ url_for('auth.logout') }}" class="btn-back">Cerrar<br>sesión</a>
           {% elif request.endpoint in [
-                  'admin.create_user','admin.user_list','admin.admin_holidays',
-                  'admin.admin_sites','admin.manage_hours','admin.admin_email'] %}
+                  'admin.user_list', 'admin.user_list_filter', 'admin.admin_holidays',
+                  'admin.admin_sites','admin.manage_hours','admin.admin_email', 'admin.manage_schedules'] %}
             <a href="{{ url_for('admin.admin_panel') }}" class="btn-back">Atrás</a>
-          {% elif request.endpoint in [
-                  'admin.user_list_office','admin.user_list_site', 'admin.user_list_part_time',
-                  'admin.edit_user'] %}
+
+          {% elif request.endpoint == 'admin.admin_panel' %}
+              <a href="{{ url_for('main.register') }}" class="btn-back">Atrás</a>
+
+          {% elif request.endpoint == 'main.select_month' %}
+              {% if request.args.get('origin') == 'admin' %}
+                  <a href="{{ url_for('admin.user_list') }}" class="btn-back">Atrás</a>
+              {% else %}
+                  <a href="{{ url_for('main.register') }}" class="btn-back">Atrás</a>
+              {% endif %}
+
+          {% elif request.endpoint == 'main.view_pdf' %}
+              <a href="javascript:history.back()" class="btn-back">Atrás</a>
+
+          {% elif request.endpoint in ['admin.create_user', 'admin.edit_user'] %}
             <a href="{{ url_for('admin.user_list') }}" class="btn-back">Atrás</a>
-          {% elif request.endpoint in ['admin.admin_panel','main.select_month'] %}
-            <a href="{{ url_for('main.register') }}" class="btn-back">Atrás</a>
+          {% elif request.endpoint in ['admin.edit_user_schedule', 'admin.configure_template'] %}
+            <a href="{{ url_for('admin.manage_schedules', week=(week_input_value or week_url)) }}" class="btn-back">Atrás</a>
           {% else %}
             <a href="javascript:history.back()" class="btn-back">Atrás</a>
           {% endif %}
         {% endif %}
     
-        {# — Logo or title — #}
+        {# — Logo or Title — #}
         <div class="header-title">
           <h1>{% block header %}Título de la página{% endblock %}</h1>
         </div>
@@ -70,7 +82,7 @@
         // Date fields with Monday as first day and in Spanish
         flatpickr("input.flatpickr-date", {
             dateFormat: "d-m-Y",
-            locale: "es"  // Uses Spanish language
+            locale: "es"
         });
 
         // If time fields are also used:
@@ -80,11 +92,11 @@
             dateFormat: "H:i",
             time_24hr: true,
             minuteIncrement: 1,
-            defaultDate: null, // do not autofill by default
+            defaultDate: null,
 
             onOpen(selectedDates, dateStr, instance) {
               if (autofill && !dateStr) {
-                instance.setDate(new Date(), false); // only if AUTOFILL_TIME = true
+                instance.setDate(new Date(), false);
               }
             }
         });
@@ -95,15 +107,13 @@
       function setHeaderVar(){
         const header = document.querySelector('header');
         if (!header) return;
-        const h = header.offsetHeight; // real height in px
+        const h = header.offsetHeight;
         document.documentElement.style.setProperty('--hdr', h + 'px');
       }
       setHeaderVar();
       window.addEventListener('resize', setHeaderVar);
-      // In case fonts change or late loads occur
       window.addEventListener('load', setHeaderVar);
     })();
-
 </script>
 
 </html>
