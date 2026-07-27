@@ -1,0 +1,35 @@
+# --- Virtual Environments ---
+venv/
+.venv/
+env/
+ENV/
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Database and Secrets ---
+instance/
+*.db
+*.sqlite3
+.env
+
+# --- VS Code and other editors ---
+.vscode/
+.idea/
+.DS_Store
+
+# --- User Uploads (Signatures) ---
+# I ignore the real test images...
+app/static/uploads/signatures/*
+# ...but I keep the empty folder in the repository
+!app/static/uploads/signatures/.gitkeep
+
+# --- Specific Static Files ---
+app/static/img/logo_real.jpg
+app/static/icons/real.ico
+app/static/icons/real_192x192.png
+app/static/icons/real_512x512.png
+app/static/manifest_real.json
