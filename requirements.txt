@@ -1,0 +1,68 @@
+# File: requirements.txt
+#
+# Project dependencies for the web application.
+# Install using: pip install -r requirements.txt
+#
+# Author: Laura Sanz Lobo
+
+# FLASK FRAMEWORK AND MAIN EXTENSIONS
+Flask==3.1.0
+Werkzeug==3.1.3
+Jinja2==3.1.5
+click==8.1.8
+itsdangerous==2.2.0
+blinker==1.9.0
+
+# DATABASE AND MIGRATIONS
+SQLAlchemy==2.0.37
+Flask-SQLAlchemy==3.1.1
+Flask-Migrate==4.1.0
+alembic==1.14.1
+Mako==1.3.8
+psycopg2-binary==2.9.10  # PostgreSQL adapter (Production)
+
+# SECURITY AND AUTHENTICATION
+bcrypt==4.2.1
+Flask-Bcrypt==1.0.1
+Flask-Login==0.6.3
+Flask-WTF==1.2.2
+WTForms==3.2.1
+
+# EMAIL
+Flask-Mail==0.10.0
+
+# PDF AND IMAGE GENERATION
+weasyprint==64.0
+reportlab==4.3.0
+pillow==11.1.0
+fonttools==4.55.8
+cssselect2==0.7.0
+tinyhtml5==2.0.0
+tinycss2==1.4.0
+pydyf==0.11.0
+pyphen==0.17.2
+
+# DATES AND TIMEZONES
+pytz==2024.1
+tzlocal==5.3
+python-dateutil==2.9.0.post0
+
+# SCHEDULING (BACKGROUND TASKS)
+APScheduler==3.11.0
+Flask-APScheduler==1.13.1
+
+# PRODUCTION SERVER
+gunicorn==23.0.0
+
+# LOW-LEVEL DEPENDENCIES / UTILITIES
+cffi==1.17.1
+greenlet==3.1.1
+Brotli==1.1.0
+zopfli==0.2.3.post1
+chardet==5.2.0
+packaging==24.2
+six==1.17.0
+typing_extensions==4.12.2
+webencodings==0.5.1
+pycparser==2.22
+MarkupSafe==3.0.2
