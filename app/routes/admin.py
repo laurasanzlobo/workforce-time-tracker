@@ -5,44 +5,36 @@ Routes for the administration panel and system configuration.
 
 Author: Laura Sanz Lobo
 """
-
 import os
 import uuid
-from datetime import datetime, date
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app
+from datetime import datetime, date, timedelta
 from werkzeug.utils import secure_filename
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, current_app as app
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
 
 from app.extensions import db, bcrypt
 from app.models import (
-    User, Holiday, Site, Record, 
-    OfficeConfig, SiteConfig, PartTimeConfig, EmailConfig
+    User, Holiday, Site, Record, EmailConfig, OfficeConfig, SiteConfig, PartTimeConfig
 )
 from app.decorators import admin_required
 from app.utils import allowed_file
 
 admin_bp = Blueprint('admin', __name__)
 
-# --- MAIN DASHBOARD ---
-
 @admin_bp.route("/admin")
 @admin_required 
 def admin_panel():
-    """Main view for the administration dashboard."""
     return render_template("admin/admin_dashboard.html")
 
-# --- USER MANAGEMENT (CREATE & EDIT) ---
+"""***************************************************************************"""
+"""  User Management """
 
 @admin_bp.route("/admin/users/create", methods=["GET", "POST"])
+@admin_required 
 def create_user():
-    """
-    Allows the creation of new users.
-    If no administrators exist in the DB, allows creating the first one without login.
-    If they already exist, requires an active administrator session.
-    """
     admin_exists = User.query.filter_by(is_admin=True).first()
 
-    # Protection: If an admin already exists, the user must be logged in as admin
     if admin_exists and "user_id" not in session:
         flash("Debes ser administrador para crear nuevos usuarios.", "error")
         return redirect(url_for("auth.login"))
@@ -52,34 +44,32 @@ def create_user():
         password = request.form.get("password", "").strip()
         full_name = request.form.get("full_name", "").strip()
         national_id = request.form.get("national_id", "").strip()
-        # The first user will always be an admin, subsequent ones depend on the checkbox
-        is_admin = "is_admin" in request.form if admin_exists else True 
+        is_admin = "is_admin" in request.form if admin_exists else True
         worker_type = request.form.get("worker_type")
         start_date_str = request.form.get("start_date")
         end_date_str = request.form.get("end_date")
 
         if not username or not password or not full_name or not national_id or not start_date_str:
-            flash("Todos los campos son obligatorios excepto la firma y la fecha de fin.", "error")
+            flash("Todos los campos son obligatorios excepto la firma.", "error")
             return redirect(url_for("admin.create_user"))
         
         if worker_type not in ["office", "site", "part_time"]:
-            flash("Tipo de trabajador no válido.", "error")
+            flash("Tipo de trabajador inválido.", "error")
             return redirect(url_for("admin.create_user"))
             
         start_date = datetime.strptime(start_date_str, "%d-%m-%Y").date() if start_date_str else date.today()
         end_date = datetime.strptime(end_date_str, "%d-%m-%Y").date() if end_date_str else None
 
-        # Signature processing
         signature_file = request.files.get("signature")
         signature_path = None
         
         if signature_file and signature_file.filename:
             if allowed_file(signature_file.filename):
                 filename = f"{uuid.uuid4().hex}_{secure_filename(signature_file.filename)}"
-                signature_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+                signature_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                 signature_file.save(signature_path)
             else:
-                flash("El formato de la firma no está permitido.", "error")
+                flash("Formato de firma no permitido (solo PNG/JPG/JPEG/GIF).", "error")
                 return redirect(url_for("admin.create_user"))
             
         try:
@@ -98,9 +88,9 @@ def create_user():
 
             db.session.add(new_user)
             db.session.commit()
-            flash("Usuario creado correctamente.", "success")
+            
+            flash("Usuario creado con éxito.", "success")
 
-            # Auto-login if it's the first user in the system
             if not admin_exists:
                 session["user_id"] = new_user.id
                 return redirect(url_for("admin.admin_panel"))
@@ -109,18 +99,19 @@ def create_user():
 
         except IntegrityError:
             db.session.rollback()
-            flash("El nombre de usuario o el DNI ya existe.", "error")
-            return redirect(url_for("admin.create_user"))
-        except Exception as e:
-            flash(f"Error inesperado: {e}", "error")
+            flash("El nombre de usuario ya existe. Por favor, verifica los datos.", "error")
             return redirect(url_for("admin.create_user"))
 
+        except Exception as e:
+            flash(f"Error inesperado al crear usuario: {e}", "error")
+            return redirect(url_for("admin.create_user"))
+        
     return render_template("admin/create_user.html")
+
 
 @admin_bp.route("/admin/users/edit/<int:user_id>", methods=["GET", "POST"])
 @admin_required
 def edit_user(user_id):
-    """Edits an existing user's data."""
     user = User.query.get_or_404(user_id)
     back_url = request.args.get("back") or url_for("admin.user_list")
 
@@ -140,7 +131,7 @@ def edit_user(user_id):
             try:
                 user.start_date = datetime.strptime(start_date_str, "%d-%m-%Y").date()
             except ValueError:
-                flash("Fecha de inicio no válida.", "error")
+                flash("Formato de fecha inválido. Usa DD-MM-YYYY.", "error")
                 return redirect(request.url)
         
         end_date_str = request.form.get("end_date", "").strip()
@@ -150,82 +141,192 @@ def edit_user(user_id):
             try:
                 new_end_date = datetime.strptime(end_date_str, "%d-%m-%Y").date()
                 user.end_date = new_end_date
-                # Clear future records after the end date
-                Record.query.filter(
+                
+                records_to_delete = Record.query.filter(
                     Record.user_id == user.id,
                     Record.date > new_end_date
-                ).delete(synchronize_session=False)
+                )
+                records_to_delete.delete(synchronize_session=False)
+                    
             except ValueError:
-                flash("Fecha de fin no válida.", "error")
+                flash("Formato de fecha de baja inválido. Usa DD-MM-YYYY.", "error")
                 return redirect(request.url)
 
-        # Signature update
         signature_file = request.files.get("signature")
         if signature_file and signature_file.filename:
             if allowed_file(signature_file.filename):
                 filename = f"{uuid.uuid4().hex}_{secure_filename(signature_file.filename)}"
-                signature_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+                os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
+                signature_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
                 signature_file.save(signature_path)
                 user.signature = signature_path
             else:
-                flash("Formato de firma incorrecto.", "error")
+                flash("Formato de firma no permitido.", "error")
                 return redirect(request.url)
 
         try:
             db.session.commit()
-            flash("Usuario actualizado.", "success")
+            flash("Usuario actualizado correctamente.", "success")
             return redirect(back_url)
         except IntegrityError:
             db.session.rollback()
-            flash("El nombre de usuario o el DNI está duplicado.", "error")
+            flash("Nombre de usuario duplicado.", "error")
             return redirect(request.url)
 
     return render_template("admin/edit_user.html", user=user, back_url=back_url)
 
-@admin_bp.route("/admin/users/delete/<int:user_id>/<string:worker_type>", methods=["POST"])
+
+@admin_bp.route("/admin/users/delete/<int:user_id>", methods=["POST"])
 @admin_required
-def delete_user(user_id, worker_type):
-    """Logical or physical deletion of a user."""
+def delete_user(user_id):
     user = User.query.get_or_404(user_id)
+
     if user.id == session["user_id"]:
         flash("No puedes eliminar tu propia cuenta.", "error")
     else:
         db.session.delete(user)
         db.session.commit()
-        flash("Usuario eliminado.", "success")
-    
-    # Dynamic redirection based on the origin list
-    if worker_type == 'office': return redirect(url_for("admin.user_list_office"))
-    elif worker_type == 'site': return redirect(url_for("admin.user_list_site"))
-    elif worker_type == 'part_time': return redirect(url_for("admin.user_list_part_time"))
-    return redirect(url_for("admin.user_list"))
+        flash("Usuario eliminado correctamente.", "success")
+        
+    return redirect(request.referrer or url_for("admin.user_list"))
 
-# --- USER LISTS ---
 
-@admin_bp.route("/admin/users")
+@admin_bp.route("/admin/users", methods=["GET"])
 @admin_required
 def user_list():
-    return render_template("admin/user_list.html")
+    search_query = request.args.get('q')
+    query = User.query
 
-@admin_bp.route("/admin/users/office")
+    if search_query:
+        query = query.filter(
+            or_(
+                User.full_name.ilike(f"%{search_query}%"),
+                User.national_id.ilike(f"%{search_query}%"),
+                User.username.ilike(f"%{search_query}%")
+            )
+        )
+    
+    users = query.order_by(User.full_name.asc()).all()
+    return render_template("admin/user_list.html", users=users, current_filter=None)
+
+@admin_bp.route("/admin/users/filter/<string:worker_type>")
 @admin_required
-def user_list_office():
-    users = User.query.filter_by(worker_type='office').all()
-    return render_template("admin/user_list_office.html", users=users)
+def user_list_filter(worker_type):
+    if worker_type not in ['office', 'site', 'part_time']: 
+        return redirect(url_for("admin.user_list"))
+    
+    users = User.query.filter_by(worker_type=worker_type).order_by(User.full_name).all()
+    return render_template("admin/user_list.html", users=users, current_filter=worker_type)
 
-@admin_bp.route("/admin/users/site")
+
+"""***************************************************************************"""
+""" Manage Schedule Config """
+
+@admin_bp.route('/admin/manage_hours', methods=['GET', 'POST'])
 @admin_required
-def user_list_site():
-    users = User.query.filter_by(worker_type='site').all()
-    return render_template("admin/user_list_site.html", users=users)
+def manage_hours():
+    config_office = OfficeConfig.query.first()
+    config_site = SiteConfig.query.first()
+    config_part_time = PartTimeConfig.query.first()
 
-@admin_bp.route("/admin/users/part_time")
-@admin_required
-def user_list_part_time():
-    users = User.query.filter_by(worker_type='part_time').all()
-    return render_template("admin/user_list_part_time.html", users=users)
+    if not config_office:
+        config_office = OfficeConfig()
+        db.session.add(config_office)
+        db.session.commit()
 
-# --- HOLIDAY MANAGEMENT ---
+    if not config_site:
+        config_site = SiteConfig()
+        db.session.add(config_site)
+        db.session.commit()
+        
+    if not config_part_time:
+        config_part_time = PartTimeConfig()
+        db.session.add(config_part_time)
+        db.session.commit()
+
+    if request.method == 'POST':
+
+        def parse_time(value):
+            return datetime.strptime(value, "%H:%M").time() if value else None
+        
+        # Office Schedule
+        config_office.morning_in_mon_wed_winter = parse_time(request.form.get("morning_in_mon_wed_winter"))
+        config_office.morning_out_mon_wed_winter  = parse_time(request.form.get("morning_out_mon_wed_winter"))
+        config_office.afternoon_in_mon_wed_winter  = parse_time(request.form.get("afternoon_in_mon_wed_winter"))
+        config_office.afternoon_out_mon_wed_winter   = parse_time(request.form.get("afternoon_out_mon_wed_winter"))
+        
+        config_office.morning_in_tue_thu_winter = parse_time(request.form.get("morning_in_tue_thu_winter"))
+        config_office.morning_out_tue_thu_winter  = parse_time(request.form.get("morning_out_tue_thu_winter"))
+        
+        config_office.in_friday_winter   = parse_time(request.form.get("in_friday_winter"))
+        config_office.out_friday_winter    = parse_time(request.form.get("out_friday_winter"))
+
+        config_office.summer_start = datetime.strptime(request.form.get("summer_start"), "%d-%m-%Y").date() if request.form.get("summer_start") else None
+        config_office.summer_end = datetime.strptime(request.form.get("summer_end"), "%d-%m-%Y").date() if request.form.get("summer_end") else None
+        config_office.morning_in_summer = parse_time(request.form.get("morning_in_summer"))
+        config_office.morning_out_summer = parse_time(request.form.get("morning_out_summer"))
+        config_office.in_friday_summer = parse_time(request.form.get("in_friday_summer"))
+        config_office.out_friday_summer = parse_time(request.form.get("out_friday_summer"))
+
+        # Part-Time Schedule
+        config_part_time.in_winter = parse_time(request.form.get("in_winter_pt"))
+        config_part_time.out_winter  = parse_time(request.form.get("out_winter_pt"))
+        config_part_time.in_friday_winter = parse_time(request.form.get("in_friday_winter_pt"))
+        config_part_time.out_friday_winter  = parse_time(request.form.get("out_friday_winter_pt"))
+        
+        config_part_time.in_summer = parse_time(request.form.get("in_summer_pt"))
+        config_part_time.out_summer  = parse_time(request.form.get("out_summer_pt"))
+        config_part_time.in_friday_summer = parse_time(request.form.get("in_friday_summer_pt"))
+        config_part_time.out_friday_summer  = parse_time(request.form.get("out_friday_summer_pt"))
+
+        # Site Schedule
+        config_site.in_winter = parse_time(request.form.get("in_winter_site"))
+        config_site.out_winter = parse_time(request.form.get("out_winter_site"))
+        config_site.in_friday_winter = parse_time(request.form.get("in_friday_winter_site"))
+        config_site.out_friday_winter = parse_time(request.form.get("out_friday_winter_site"))
+
+        config_site.july_start = datetime.strptime(request.form.get("july_start_site"), "%d-%m-%Y").date() if request.form.get("july_start_site") else None
+        config_site.july_end = datetime.strptime(request.form.get("july_end_site"), "%d-%m-%Y").date() if request.form.get("july_end_site") else None
+        config_site.in_july = parse_time(request.form.get("in_july_site"))
+        config_site.out_july = parse_time(request.form.get("out_july_site"))
+        config_site.in_friday_july = parse_time(request.form.get("in_friday_july_site"))
+        config_site.out_friday_july = parse_time(request.form.get("out_friday_july_site"))
+
+        config_site.august_start = datetime.strptime(request.form.get("august_start_site"), "%d-%m-%Y").date() if request.form.get("august_start_site") else None
+        config_site.august_end = datetime.strptime(request.form.get("august_end_site"), "%d-%m-%Y").date() if request.form.get("august_end_site") else None
+        config_site.in_august = parse_time(request.form.get("in_august_site"))
+        config_site.out_august = parse_time(request.form.get("out_august_site"))
+        config_site.in_friday_august = parse_time(request.form.get("in_friday_august_site"))
+        config_site.out_friday_august = parse_time(request.form.get("out_friday_august_site"))
+
+        db.session.commit()
+        flash("Horarios actualizados correctamente", "success")
+        return redirect(url_for("admin.manage_hours"))
+    
+    summer_start_fmt = config_office.summer_start.strftime("%d-%m-%Y") if config_office.summer_start else ""
+    summer_end_fmt = config_office.summer_end.strftime("%d-%m-%Y") if config_office.summer_end else ""
+    
+    if config_site.july_start:
+        config_site.july_start = config_site.july_start.strftime("%d-%m-%Y")
+    if config_site.july_end:
+        config_site.july_end = config_site.july_end.strftime("%d-%m-%Y")
+    if config_site.august_start:
+        config_site.august_start = config_site.august_start.strftime("%d-%m-%Y")
+    if config_site.august_end:
+        config_site.august_end = config_site.august_end.strftime("%d-%m-%Y")
+
+    return render_template(
+        "admin/manage_hours.html", 
+        config_office=config_office, 
+        config_site=config_site, 
+        config_part_time=config_part_time,
+        summer_start_fmt=summer_start_fmt,
+        summer_end_fmt=summer_end_fmt
+    )
+
+
+"""***************************************************************************"""
+""" Manage Holidays """
 
 @admin_bp.route("/admin/holidays", methods=["GET", "POST"])
 @admin_required
@@ -236,21 +337,22 @@ def admin_holidays():
         try:
             date_obj = datetime.strptime(date_str, "%d-%m-%Y").date()
             if Holiday.query.filter_by(date=date_obj).first():
-                flash("Ya existe un festivo en esa fecha.", "error")
+                flash("Ya existe un festivo registrado para esa fecha.", "error")
             else:
+                Record.query.filter_by(date=date_obj).delete()
                 db.session.add(Holiday(date=date_obj, description=description))
                 db.session.commit()
-                flash("Festivo añadido.", "success")
+                flash("Festivo agregado correctamente.", "success")
         except ValueError:
-            flash("Formato de fecha no válido.", "error")
+            flash("Formato de fecha inválido.", "error")
         except IntegrityError:
             db.session.rollback()
-            flash("Error de integridad en la base de datos.", "error")
-        
+            flash("Error de integridad al guardar el festivo.", "error")
         return redirect(url_for("admin.admin_holidays"))
 
     holidays = Holiday.query.order_by(Holiday.date).all()
     return render_template("admin/admin_holidays.html", holidays=holidays)
+
 
 @admin_bp.route("/admin/holidays/delete/<int:holiday_id>", methods=["POST"])
 @admin_required
@@ -258,30 +360,33 @@ def delete_holiday(holiday_id):
     holiday = Holiday.query.get_or_404(holiday_id)
     db.session.delete(holiday)
     db.session.commit()
-    flash("Festivo eliminado.", "success")
+    flash("Festivo eliminado correctamente.", "success")
     return redirect(url_for("admin.admin_holidays"))
 
-# --- SITE MANAGEMENT ---
+
+"""***************************************************************************"""
+""" Manage Sites """
 
 @admin_bp.route("/admin/sites", methods=["GET", "POST"])
 @admin_required
 def admin_sites():
     if request.method == "POST":
-        name = request.form.get("site_name", "").strip()
-        if not name:
-            flash("El nombre no puede estar vacío.", "error")
+        site_name = request.form.get("site_name", "").strip()
+        if not site_name:
+            flash("El nombre de la obra no puede estar vacío.", "error")
         else:
             try:
-                db.session.add(Site(name=name))
+                db.session.add(Site(name=site_name))
                 db.session.commit()
-                flash("Centro añadido.", "success")
+                flash("Obra agregada correctamente.", "success")
             except IntegrityError:
                 db.session.rollback()
-                flash("Ya existe un centro con ese nombre.", "error")
+                flash("Ya existe una obra con ese nombre.", "error")
         return redirect(url_for("admin.admin_sites"))
-
+    
     sites = Site.query.order_by(Site.is_active.desc(), Site.name.asc()).all()
     return render_template("admin/admin_sites.html", sites=sites)
+
 
 @admin_bp.route("/admin/sites/delete/<int:site_id>", methods=["POST"])
 @admin_required
@@ -289,8 +394,9 @@ def delete_site(site_id):
     site = Site.query.get_or_404(site_id)
     db.session.delete(site)
     db.session.commit()
-    flash("Centro eliminado.", "success")
+    flash("Obra eliminada correctamente.", "success")
     return redirect(url_for("admin.admin_sites"))
+
 
 @admin_bp.route("/admin/sites/archive/<int:site_id>", methods=["POST"])
 @admin_required
@@ -298,8 +404,9 @@ def archive_site(site_id):
     site = Site.query.get_or_404(site_id)
     site.is_active = False
     db.session.commit()
-    flash(f"Centro '{site.name}' archivado.", "success")
+    flash(f"La obra '{site.name}' ha sido archivada.", "success")
     return redirect(url_for("admin.admin_sites"))
+
 
 @admin_bp.route("/admin/sites/reactivate/<int:site_id>", methods=["POST"])
 @admin_required
@@ -307,28 +414,31 @@ def reactivate_site(site_id):
     site = Site.query.get_or_404(site_id)
     site.is_active = True
     db.session.commit()
-    flash(f"Centro '{site.name}' reactivado.", "success")
+    flash(f"La obra '{site.name}' ha sido reactivada.", "success")
     return redirect(url_for("admin.admin_sites"))
+
 
 @admin_bp.route("/admin/sites/edit/<int:site_id>", methods=["POST"])
 @admin_required
 def edit_site(site_id):
     new_name = request.form.get("new_name", "").strip()
     if not new_name:
-        flash("El nombre no puede estar vacío.", "error")
+        flash("El nuevo nombre no puede estar vacío.", "error")
         return redirect(url_for("admin.admin_sites"))
 
     site = Site.query.get_or_404(site_id)
     site.name = new_name
     try:
         db.session.commit()
-        flash("Nombre actualizado.", "success")
+        flash("Nombre actualizado correctamente.", "success")
     except IntegrityError:
         db.session.rollback()
-        flash("Ya existe un centro con ese nombre.", "error")
+        flash("Ya existe una obra con ese nombre.", "error")
     return redirect(url_for("admin.admin_sites"))
 
-# --- EMAIL AND SCHEDULE CONFIGURATION ---
+
+"""***************************************************************************"""
+""" Manage Email """
 
 @admin_bp.route("/admin/email", methods=["GET", "POST"])
 @admin_required
@@ -340,91 +450,17 @@ def admin_email():
         db.session.commit()
 
     if request.method == "POST":
-        config.sender_email = request.form.get("sender_email", "").strip()
-        config.sender_password = request.form.get("sender_password", "").strip()
-        config.destination_email = request.form.get("destination_email", "").strip()
-        db.session.commit()
-        flash("Configuración actualizada.", "success")
+        sender_email = request.form.get("sender_email", "").strip()
+        sender_password = request.form.get("sender_password", "").strip()
+        destination_email = request.form.get("destination_email", "").strip()
+        if sender_email and sender_password and destination_email:
+            config.sender_email = sender_email
+            config.sender_password = sender_password
+            config.destination_email = destination_email
+            db.session.commit()
+            flash("Configuración de correo actualizada correctamente.", "success")
+        else:
+            flash("Debes introducir todos los campos.", "error")
         return redirect(url_for("admin.admin_email"))
     
     return render_template("admin/admin_email.html", config=config)
-
-@admin_bp.route('/admin/manage_hours', methods=['GET', 'POST'])
-@admin_required
-def manage_hours():
-    # Lazy creation of configs if they do not exist
-    if not OfficeConfig.query.first(): db.session.add(OfficeConfig()); db.session.commit()
-    if not SiteConfig.query.first(): db.session.add(SiteConfig()); db.session.commit()
-    if not PartTimeConfig.query.first(): db.session.add(PartTimeConfig()); db.session.commit()
-
-    c_office = OfficeConfig.query.first()
-    c_site = SiteConfig.query.first()
-    c_part_time = PartTimeConfig.query.first()
-
-    if request.method == 'POST':
-        def pt(v): return datetime.strptime(v, "%H:%M").time() if v else None
-        def pd(v): return datetime.strptime(v, "%d-%m-%Y").date() if v else None
-
-        # Office schedule mass update
-        c_office.morning_in_mon_wed_winter = pt(request.form.get("morning_in_mon_wed_winter"))
-        c_office.morning_out_mon_wed_winter = pt(request.form.get("morning_out_mon_wed_winter"))
-        c_office.afternoon_in_mon_wed_winter = pt(request.form.get("afternoon_in_mon_wed_winter"))
-        c_office.afternoon_out_mon_wed_winter = pt(request.form.get("afternoon_out_mon_wed_winter"))
-        c_office.morning_in_tue_thu_winter = pt(request.form.get("morning_in_tue_thu_winter"))
-        c_office.morning_out_tue_thu_winter = pt(request.form.get("morning_out_tue_thu_winter"))
-        c_office.in_friday_winter = pt(request.form.get("in_friday_winter"))
-        c_office.out_friday_winter = pt(request.form.get("out_friday_winter"))
-        
-        c_office.summer_start = pd(request.form.get("summer_start"))
-        c_office.summer_end = pd(request.form.get("summer_end"))
-        c_office.morning_in_summer = pt(request.form.get("morning_in_summer"))
-        c_office.morning_out_summer = pt(request.form.get("morning_out_summer"))
-        c_office.in_friday_summer = pt(request.form.get("in_friday_summer"))
-        c_office.out_friday_summer = pt(request.form.get("out_friday_summer"))
-
-        # Part-Time schedule update
-        c_part_time.in_winter = pt(request.form.get("in_winter_pt"))
-        c_part_time.out_winter = pt(request.form.get("out_winter_pt"))
-        c_part_time.in_friday_winter = pt(request.form.get("in_friday_winter_pt"))
-        c_part_time.out_friday_winter = pt(request.form.get("out_friday_winter_pt"))
-        c_part_time.in_summer = pt(request.form.get("in_summer_pt"))
-        c_part_time.out_summer = pt(request.form.get("out_summer_pt"))
-        c_part_time.in_friday_summer = pt(request.form.get("in_friday_summer_pt"))
-        c_part_time.out_friday_summer = pt(request.form.get("out_friday_summer_pt"))
-
-        # Site schedule update
-        c_site.in_winter = pt(request.form.get("in_winter_site"))
-        c_site.out_winter = pt(request.form.get("out_winter_site"))
-        c_site.in_friday_winter = pt(request.form.get("in_friday_winter_site"))
-        c_site.out_friday_winter = pt(request.form.get("out_friday_winter_site"))
-        
-        c_site.july_start = pd(request.form.get("july_start_site"))
-        c_site.july_end = pd(request.form.get("july_end_site"))
-        c_site.in_july = pt(request.form.get("in_july_site"))
-        c_site.out_july = pt(request.form.get("out_july_site"))
-        c_site.in_friday_july = pt(request.form.get("in_friday_july_site"))
-        c_site.out_friday_july = pt(request.form.get("out_friday_july_site"))
-        
-        c_site.august_start = pd(request.form.get("august_start_site"))
-        c_site.august_end = pd(request.form.get("august_end_site"))
-        c_site.in_august = pt(request.form.get("in_august_site"))
-        c_site.out_august = pt(request.form.get("out_august_site"))
-        c_site.in_friday_august = pt(request.form.get("in_friday_august_site"))
-        c_site.out_friday_august = pt(request.form.get("out_friday_august_site"))
-
-        db.session.commit()
-        flash("Los horarios se han actualizado correctamente.", "success")
-        return redirect(url_for("admin.manage_hours"))
-
-    fmt = "%d-%m-%Y"
-    formatted_dates = {
-        "summer_start": c_office.summer_start.strftime(fmt) if c_office.summer_start else "",
-        "summer_end": c_office.summer_end.strftime(fmt) if c_office.summer_end else ""
-    }
-    
-    return render_template(
-        "admin/manage_hours.html", 
-        config_office=c_office, config_site=c_site, config_part_time=c_part_time,
-        summer_start_fmt=formatted_dates["summer_start"],
-        summer_end_fmt=formatted_dates["summer_end"]
-    )

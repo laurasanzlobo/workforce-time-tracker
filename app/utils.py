@@ -9,7 +9,7 @@ Author: Laura Sanz Lobo
 import os
 import pytz
 import random
-import threading
+import traceback
 from datetime import datetime, timedelta, date, time
 from flask import current_app, render_template
 from werkzeug.utils import secure_filename
@@ -26,7 +26,7 @@ from app.models import (
 TZ = pytz.timezone("Europe/Madrid")
 
 
-def current_time():
+def get_current_date():
     """
     Retrieves the current date and time localized to the application's default timezone.
     
@@ -64,11 +64,11 @@ def create_base_admin():
         new_admin = User(
             username="admin",
             password=hashed_password,
-            full_name="System Administrator",
+            full_name="Administrador",
             national_id="00000000X",
             worker_type="office",
             is_admin=True,
-            start_date=current_time().date()
+            start_date=get_current_date().date()
         )
         
         db.session.add(new_admin)
@@ -80,12 +80,6 @@ def get_template_configuration(root_path):
     """
     Determines and manages which static assets (Favicon, Manifest, Mobile Icon) 
     to serve dynamically in the application templates.
-    
-    Args:
-        root_path (str): The root directory path of the Flask application.
-        
-    Returns:
-        dict: A dictionary containing the correct file paths for the UI assets.
     """
     import os
     config = {}
@@ -104,7 +98,7 @@ def get_template_configuration(root_path):
 
     # 3. MOBILE ICON (iPhone/Android Icon)
     if os.path.exists(os.path.join(root_path, "static", "icons", "real_192x192.png")):
-        config["mobile_icon_file"] = "icons/real_192.png"
+        config["mobile_icon_file"] = "icons/real_192x192.png"
     else:
         config["mobile_icon_file"] = "icons/icon_192.png" 
 
@@ -115,12 +109,6 @@ def adjust_clock_in(h: time) -> time:
     """
     Applies a weighted random logic to slightly vary the clock-in time, 
     simulating realistic human entry patterns.
-    
-    Args:
-        h (time): The theoretical exact clock-in time.
-        
-    Returns:
-        time: The adjusted realistic clock-in time.
     """
     if not h:
         return None
@@ -138,12 +126,6 @@ def adjust_clock_out(h: time) -> time:
     """
     Applies a weighted random logic to slightly vary the clock-out time, 
     ensuring exit times look organic.
-    
-    Args:
-        h (time): The theoretical exact clock-out time.
-        
-    Returns:
-        time: The adjusted realistic clock-out time.
     """
     if not h:
         return None
@@ -161,14 +143,6 @@ def get_default_hours(date_obj, worker_type, user_id):
     """
     Calculates the theoretical work schedule for a specific employee on a given date.
     Considers the season (summer/winter), weekends, public holidays, and specific role configurations.
-    
-    Args:
-        date_obj (date): The target date to calculate hours for.
-        worker_type (str): The role of the worker ('office', 'site', or 'part_time').
-        user_id (int): The unique identifier of the user.
-        
-    Returns:
-        dict | None: A dictionary with the calculated schedule blocks, or None if it's a day off.
     """
     # 1. Check for holidays or weekends
     if date_obj.weekday() in [5, 6] or Holiday.query.filter_by(date=date_obj).first():
@@ -291,14 +265,6 @@ def generate_pdf(user, month, year):
     """
     Generates a formal monthly attendance PDF report for a given user.
     It calculates total hours worked, handles missing days, and incorporates user signatures.
-    
-    Args:
-        user (User): The database user object.
-        month (int): The target month.
-        year (int): The target year.
-        
-    Returns:
-        bytes: The binary content of the generated PDF file.
     """
     start_date = date(year, month, 1)
     _, last_day = monthrange(year, month)
@@ -361,15 +327,109 @@ def generate_pdf(user, month, year):
 
 def send_async_email(app, msg):
     """
-    Handles the asynchronous dispatch of emails to prevent blocking the main web thread.
-    Configuration is fixed to route securely through a verified sender to an anonymized HR endpoint.
-    
-    Args:
-        app (Flask): The current Flask application instance.
-        msg (Message): The pre-configured email message object.
+    Handles the asynchronous dispatch of emails using Flask-Mail.
+    Configures context dynamically to avoid thread issues.
     """
     with app.app_context():
-        # Configuration fixed to verified Brevo sender and anonymized final company recipient
-        msg.sender = "your.verified.email@domain.com"
-        msg.recipients = ["hr@construction-company.com"]
-        mail.send(msg)
+        try:
+            app.extensions['mail'].username = app.config.get('MAIL_USERNAME')
+            app.extensions['mail'].password = app.config.get('MAIL_PASSWORD')
+            
+            mail.send(msg)
+            app.logger.info(f"Correo enviado con éxito a {msg.recipients}")
+            
+        except Exception as e:
+            app.logger.error(f"Error crítico al enviar correo: {str(e)}")
+            app.logger.error(traceback.format_exc())
+
+
+def sync_record_range(user_id, start_date, end_date):
+    """
+    Fills and deeply repairs records for a user strictly within the given date range.
+    Optimized for bulk checking using a dictionary map.
+    """
+    user = User.query.get(user_id)
+    if not user:
+        return
+
+    worker_type = user.worker_type or "unknown"
+    now = datetime.now()
+    today = now.date()
+
+    if user.end_date and user.end_date < end_date:
+        end_date = user.end_date
+
+    if start_date > end_date:
+        return
+
+    # Efficient bulk load O(1)
+    existing_records = Record.query.filter(
+        Record.user_id == user.id,
+        Record.date >= start_date,
+        Record.date <= end_date
+    ).all()
+    records_dict = {r.date: r for r in existing_records}
+
+    holidays = Holiday.query.filter(
+        Holiday.date >= start_date,
+        Holiday.date <= end_date
+    ).all()
+    holiday_dates = {h.date for h in holidays}
+
+    made_changes = False
+    cursor_date = start_date
+
+    while cursor_date <= end_date:
+        if cursor_date.weekday() >= 5 or cursor_date in holiday_dates:
+            cursor_date += timedelta(days=1)
+            continue
+
+        hours = get_default_hours(cursor_date, worker_type, user.id)
+        if not hours:
+            cursor_date += timedelta(days=1)
+            continue
+        
+        clock_in = adjust_clock_in(hours.get("clock_in"))
+        clock_out = adjust_clock_out(hours.get("clock_out"))
+        clock_in_afternoon = adjust_clock_in(hours.get("clock_in_afternoon"))
+        clock_out_afternoon = adjust_clock_out(hours.get("clock_out_afternoon"))
+        site_id = hours.get("site_id")
+
+        record = records_dict.get(cursor_date)
+
+        # DEEP REPAIR LOGIC
+        if cursor_date < today:
+            if not record:
+                new_record = Record(
+                    user_id=user.id, date=cursor_date, day_type="normal",
+                    clock_in=clock_in, clock_out=clock_out,
+                    clock_in_afternoon=clock_in_afternoon, clock_out_afternoon=clock_out_afternoon,
+                    site_id=site_id
+                )
+                db.session.add(new_record)
+                made_changes = True
+            elif not record.day_type or record.day_type == "normal":
+                if clock_in and record.clock_in is None: record.clock_in = clock_in; made_changes = True
+                if clock_out and record.clock_out is None: record.clock_out = clock_out; made_changes = True
+                if clock_in_afternoon and clock_out_afternoon:
+                    if record.clock_in_afternoon is None: record.clock_in_afternoon = clock_in_afternoon; made_changes = True
+                    if record.clock_out_afternoon is None: record.clock_out_afternoon = clock_out_afternoon; made_changes = True
+
+        elif cursor_date == today:
+            if not record:
+                record = Record(user_id=user.id, date=cursor_date, day_type="normal", site_id=site_id)
+                db.session.add(record)
+
+            if clock_in and now.time() >= clock_in and record.clock_in is None:
+                record.clock_in = clock_in; made_changes = True
+            if clock_out and now.time() >= clock_out and record.clock_out is None:
+                record.clock_out = clock_out; made_changes = True
+            if clock_in_afternoon and now.time() >= clock_in_afternoon and record.clock_in_afternoon is None:
+                record.clock_in_afternoon = clock_in_afternoon; made_changes = True
+            if clock_out_afternoon and now.time() >= clock_out_afternoon and record.clock_out_afternoon is None:
+                record.clock_out_afternoon = clock_out_afternoon; made_changes = True
+
+        cursor_date += timedelta(days=1)
+
+    if made_changes:
+        db.session.commit()
