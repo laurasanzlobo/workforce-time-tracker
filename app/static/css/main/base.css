@@ -1,0 +1,164 @@
+/* File: app/static/css/main/base.css */
+/* Author: Laura Sanz Lobo */
+
+/* Background and general alignment */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #2596be;
+    color: black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding-top: var(--hdr, 72px);
+}
+
+/* Header */
+header {
+    background: white;
+    width: 100%;
+    text-align: center;
+    padding: 15px 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.header-inner{
+    position:relative;         /* anchor for .btn-back */
+    display:flex;
+    flex-direction:column;     /* stack vertically */
+    align-items:center;
+    gap:.75rem;                /* separate button-logo/title */
+    padding:12px 0 8px;        /* slightly taller for the button */
+}
+
+.header-inner.logo-header{
+    padding: 0;          /* only for the logo */
+}
+
+/* --- 2-B. Logo / title automatically centered --- */
+.header-title{
+    flex:1;
+    text-align:center;
+}
+.header-title img{             /* logo */
+    width: clamp(60px, 25vw, 80px);
+    height:auto;
+}
+
+.header-title h1{              /* pages showing text */
+    margin:0;
+    font-size:clamp(20px,5vw,26px);
+    font-weight:700;
+    color:black;
+    text-align:center;
+}
+
+/* 1-A. Back/logout button: no underline and anchored top-left */
+.btn-back,
+.btn-back:link,
+.btn-back:visited,
+.btn-back:hover,
+.btn-back:active{
+    text-decoration:none;      /* remove underline */
+}
+
+.btn-back{
+    position:absolute;         /* placed over the header */
+    top:8px;                   /* margins to your liking */
+    left:12px;
+    padding:6px 12px;
+    font-size:14px;
+    background:#f59e0b;
+    color:#fff;
+    border-radius:6px;
+    box-shadow:0 4px 6px rgba(0,0,0,.12);
+    transition:background .25s;
+}
+.btn-back:hover{background:#c56e00;}
+
+.btn, .btn-back{
+    font-size: clamp(14px, 4vw, 16px);
+    line-height: 1.2;
+}
+
+/* Flash message styles */
+.flash-messages {
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto;
+    text-align: center;
+}
+
+.alert {
+    padding: 12px;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-direction: column;
+  }
+
+@media (min-width: 600px) {
+    .row {
+        flex-direction: row; /* horizontal on larger screens */
+    }
+}
+
+.btn {
+    display: block;
+    color: white;
+    border: none;
+    text-decoration: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 90%;
+    margin: 0 auto 5px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.btn:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Corporate buttons - overrides any reboot/bootstrap */
+a.btn,
+a.btn:link,
+a.btn:visited,
+a.btn:hover,
+a.btn:active,
+button.btn{
+  background:#f59e0b !important;
+  color:#ffffff      !important;
+  text-decoration:none !important;
+}
+a.btn:hover,
+button.btn:hover{
+  background:#c56e00 !important;
+}
