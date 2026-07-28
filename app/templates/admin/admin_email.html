@@ -1,0 +1,123 @@
+<!-- File: app/templates/admin/admin_email.html -->
+<!-- Author: Laura Sanz Lobo -->
+
+{% extends "main/base.html" %}
+
+{% block header %}Configuración de Correo{% endblock %}
+
+{% block extra_styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_email.css') }}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+    
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+{% endwith %}
+
+<div class="container">
+    <div class="card-header">
+        <h2><i class="fa-solid fa-envelope-open-text"></i> Datos de Configuración</h2>
+        <p>Configuración actual del sistema de envíos.</p>
+    </div>
+
+    <div class="status-panel">
+        <div class="status-item">
+            <span class="status-label"><i class="fa-solid fa-paper-plane"></i> Correo de Envío</span>
+            <span class="status-value {{ 'not-set' if not config.sender_email }}">
+                {{ config.sender_email or "No configurado" }}
+            </span>
+        </div>
+
+        <div class="status-item">
+            <span class="status-label"><i class="fa-solid fa-key"></i> Contraseña de Envío</span>
+            <span class="status-value {{ 'not-set' if not config.sender_password }}">
+                {% if config.sender_password %}
+                    <span class="password-dots">********</span>
+                {% else %}
+                    No configurado
+                {% endif %}
+            </span>
+        </div>
+
+        <div class="status-item">
+            <span class="status-label"><i class="fa-solid fa-inbox"></i> Correo Destino</span>
+            <span class="status-value {{ 'not-set' if not config.destination_email }}">
+                {{ config.destination_email or "No configurado" }}
+            </span>
+        </div>
+    </div>
+
+    <button class="btn-open-modal" onclick="openModal()">
+        <i class="fa-solid fa-pen-to-square"></i> Editar Configuración
+    </button>
+</div>
+
+<div id="modalEdit" class="modal-overlay">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        
+        <h3>Editar Credenciales</h3>
+        <p class="modal-desc">Introduce los datos para el envío y recepción de informes.</p>
+
+        <form action="{{ url_for('admin.admin_email') }}" method="POST" autocomplete="off">
+            
+            <div class="input-group">
+                <label for="sender_email">Correo de Envío</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-at"></i>
+                    <input type="email" id="sender_email" name="sender_email" 
+                           value="{{ config.sender_email }}" placeholder="emisor@empresa.com" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="sender_password">Contraseña de Envío</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="sender_password" name="sender_password" 
+                           value="{{ config.sender_password }}" placeholder="Tu contraseña o App Password" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="destination_email">Correo de Destino</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-share-from-square"></i>
+                    <input type="email" id="destination_email" name="destination_email" 
+                           value="{{ config.destination_email }}" placeholder="receptor@empresa.com" required>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="submit" class="btn-save">Guardar Cambios</button>
+                <button type="button" class="btn-cancel" onclick="closeModal()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal() {
+        document.getElementById('modalEdit').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('modalEdit').style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        var modal = document.getElementById('modalEdit');
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,161 @@
+<!-- File: app/templates/admin/manage_hours.html -->
+<!-- Author: Laura Sanz Lobo -->
+
+{% extends "main/base.html" %}
+
+{% block header %}Gestión de Horarios{% endblock %}
+
+{% block extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/manage_hours.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Flash Messages -->
+    {% block flash_messages %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endblock %}
+    
+    <section class="gestion-horas">
+        <form action="{{ url_for('admin.manage_hours') }}" method="POST">
+            <h2>Horario de Oficina</h2>
+
+            <h3>Horario de Invierno</h3>            
+            <!-- Monday y Wednesday -->
+            <div class="form-group">
+                <label>Lunes y Miércoles - Mañana:</label>
+                <input type="text" name="morning_in_mon_wed_winter" class="flatpickr-time" value="{{ config_office.morning_in_mon_wed_winter or '' }}" placeholder="Entrada">
+                <input type="text" name="morning_out_mon_wed_winter" class="flatpickr-time" value="{{ config_office.morning_out_mon_wed_winter or '' }}" placeholder="Salida">
+            </div>
+            <div class="form-group">
+                <label>Lunes y Miércoles - Tarde:</label>
+                <input type="text" name="afternoon_in_mon_wed_winter" class="flatpickr-time" value="{{ config_office.afternoon_in_mon_wed_winter or '' }}" placeholder="Entrada">
+                <input type="text" name="afternoon_out_mon_wed_winter" class="flatpickr-time" value="{{ config_office.afternoon_out_mon_wed_winter or '' }}" placeholder="Salida">
+            </div>
+            
+            <!-- Tuesday y Thursday -->
+            <div class="form-group">
+                <label>Martes y Jueves - Mañana:</label>
+                <input type="text" name="morning_in_tue_thu_winter" class="flatpickr-time" value="{{ config_office.morning_in_tue_thu_winter or '' }}" placeholder="Entrada">
+                <input type="text" name="morning_out_tue_thu_winter" class="flatpickr-time" value="{{ config_office.morning_out_tue_thu_winter or '' }}" placeholder="Salida">
+            </div>
+            
+            <!-- Friday -->
+            <div class="form-group">
+                <label>Viernes - Mañana:</label>
+                <input type="text" name="in_friday_winter" class="flatpickr-time" value="{{ config_office.in_friday_winter or '' }}" placeholder="Entrada">
+                <input type="text" name="out_friday_winter" class="flatpickr-time" value="{{ config_office.out_friday_winter or '' }}" placeholder="Salida">
+            </div>
+
+            <!-- Summer Schedule -->
+            <h3>Horario de Verano</h3>
+            <div class="form-group">
+                <label>Días:</label>
+                <input type="text" name="summer_start" class="flatpickr-date" value="{{ summer_start_fmt }}" placeholder="Inicio">
+                <input type="text" name="summer_end" class="flatpickr-date" value="{{ summer_end_fmt }}" placeholder="Final">                
+            </div>
+            <div class="form-group">
+                <label>Lunes-Jueves:</label>
+                <input type="text" name="morning_in_summer" class="flatpickr-time" value="{{ config_office.morning_in_summer or '' }}" placeholder="Entrada">
+                <input type="text" name="morning_out_summer" class="flatpickr-time" value="{{ config_office.morning_out_summer or '' }}" placeholder="Salida">
+            </div>
+            <div class="form-group">
+                <label>Viernes:</label>
+                <input type="text" name="in_friday_summer" class="flatpickr-time" value="{{ config_office.in_friday_summer or '' }}" placeholder="Entrada">
+                <input type="text" name="out_friday_summer" class="flatpickr-time" value="{{ config_office.out_friday_summer or '' }}" placeholder="Salida">
+            </div>
+            
+            <hr class="divider">
+            <h2>Horario de Media Jornada</h2>
+            
+            <!-- Winter Schedule -->
+            <h3>Horario de Invierno</h3>
+            <div class="form-group">
+                <label>Lunes-Jueves:</label>
+                <input type="text" name="in_winter_pt" class="flatpickr-time" value="{{ config_part_time.in_winter or '' }}" placeholder="Entrada">
+                <input type="text" name="out_winter_pt" class="flatpickr-time" value="{{ config_part_time.out_winter or '' }}" placeholder="Salida">
+            </div>
+            <div class="form-group">
+                <label>Viernes:</label>
+                <input type="text" name="in_friday_winter_pt" class="flatpickr-time" value="{{ config_part_time.in_friday_winter or '' }}" placeholder="Entrada">
+                <input type="text" name="out_friday_winter_pt" class="flatpickr-time" value="{{ config_part_time.out_friday_winter or '' }}" placeholder="Salida">
+            </div>
+            
+            <!-- Summer Schedule -->
+            <h3>Horario de Verano</h3>
+            <div class="form-group">
+                <label>Lunes-Jueves:</label>
+                <input type="text" name="in_summer_pt" class="flatpickr-time" value="{{ config_part_time.in_summer or '' }}" placeholder="Entrada">
+                <input type="text" name="out_summer_pt" class="flatpickr-time" value="{{ config_part_time.out_summer or '' }}" placeholder="Salida">
+            </div>
+            <div class="form-group">
+                <label>Viernes:</label>
+                <input type="text" name="in_friday_summer_pt" class="flatpickr-time" value="{{ config_part_time.in_friday_summer or '' }}" placeholder="Entrada">
+                <input type="text" name="out_friday_summer_pt" class="flatpickr-time" value="{{ config_part_time.out_friday_summer or '' }}" placeholder="Salida">
+            </div>
+
+            <hr class="divider">
+
+            <h2>Horario de Obra</h2>
+            
+            <!-- Winter Schedule -->
+            <h3>Horario de Invierno</h3>
+            <div class="form-group">
+                <label>Lunes-Jueves:</label>
+                <input type="text" name="in_winter_site" class="flatpickr-time" value="{{ config_site.in_winter or '' }}" placeholder="Entrada">
+                <input type="text" name="out_winter_site" class="flatpickr-time" value="{{ config_site.out_winter or '' }}" placeholder="Salida">
+            </div>
+            <div class="form-group">
+                <label>Viernes:</label>
+                <input type="text" name="in_friday_winter_site" class="flatpickr-time" value="{{ config_site.in_friday_winter or '' }}" placeholder="Entrada">
+                <input type="text" name="out_friday_winter_site" class="flatpickr-time" value="{{ config_site.out_friday_winter or '' }}" placeholder="Salida">
+            </div>
+
+            <!-- Summer Schedule -->
+            <h3>Horario de Julio</h3>
+            <div class="form-group">
+                <label>Días:</label>
+                <input type="text" name="july_start_site" class="flatpickr-date" value="{{ config_site.july_start or '' }}" placeholder="Inicio">
+                <input type="text" name="july_end_site" class="flatpickr-date" value="{{ config_site.july_end or '' }}" placeholder="Final">
+            </div>
+            <div class="form-group">
+                <label>Lunes-Jueves:</label>
+                <input type="text" name="in_july_site" class="flatpickr-time" value="{{ config_site.in_july or '' }}" placeholder="Entrada">
+                <input type="text" name="out_july_site" class="flatpickr-time" value="{{ config_site.out_july or '' }}" placeholder="Salida">
+            </div>
+            <div class="form-group">
+                <label>Viernes:</label>
+                <input type="text" name="in_friday_july_site" class="flatpickr-time" value="{{ config_site.in_friday_july or '' }}" placeholder="Entrada">
+                <input type="text" name="out_friday_july_site" class="flatpickr-time" value="{{ config_site.out_friday_july or '' }}" placeholder="Salida">
+            </div>
+            
+            <h3>Horario de Agosto</h3>
+            <div class="form-group">
+                <label>Días:</label>
+                <input type="text" name="august_start_site" class="flatpickr-date" value="{{ config_site.august_start or '' }}" placeholder="Inicio">
+                <input type="text" name="august_end_site" class="flatpickr-date" value="{{ config_site.august_end or '' }}" placeholder="Final">
+            </div>
+            <div class="form-group">
+                <label>Lunes-Jueves:</label>
+                <input type="text" name="in_august_site" class="flatpickr-time" value="{{ config_site.in_august or '' }}" placeholder="Entrada">
+                <input type="text" name="out_august_site" class="flatpickr-time" value="{{ config_site.out_august or '' }}" placeholder="Salida">
+            </div>
+            <div class="form-group">
+                <label>Viernes:</label>
+                <input type="text" name="in_friday_august_site" class="flatpickr-time" value="{{ config_site.in_friday_august or '' }}" placeholder="Entrada">
+                <input type="text" name="out_friday_august_site" class="flatpickr-time" value="{{ config_site.out_friday_august or '' }}" placeholder="Salida">
+            </div>
+
+            <button type="submit" class="btn btn-save">Guardar Configuración</button>
+        </form>
+    </section>
+</div>
+{% endblock %}
