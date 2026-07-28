@@ -1,0 +1,95 @@
+<!-- File: app/templates/admin/admin_sites.html -->
+<!-- Author: Laura Sanz Lobo -->
+
+{% extends "main/base.html" %}
+
+{% block header %}Gestión de Obras{% endblock %}
+
+{% block extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_sites.css') }}">
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Flash Messages -->
+    {% block flash_messages %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endblock %}
+
+    <!-- Form to add a new site -->
+    <div class="form-section">
+        <h2>Añadir una nueva obra</h2>
+        <form action="{{ url_for('admin.admin_sites') }}" method="POST">
+            <div class="form-group">
+                <label for="site_name"><i class="fas fa-edit"></i> Nombre de la obra:</label>
+                <input type="text" id="site_name" name="site_name" placeholder="..." required>
+            </div>
+            <button type="submit" class="btn-add"><i class="fas fa-plus"></i> Añadir Obra</button>
+        </form>
+    </div>
+
+    <!-- Table of existing sites -->
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Estado</th>
+                <th>Activar</th>
+                <th>Eliminar</th>
+                <th>Editar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for site in sites %}
+            <tr>
+                <td>{{ site.name }}</td>
+                <td>
+                    {% if site.is_active %}
+                        <span style="color: green;">Activa</span>
+                    {% else %}
+                        <span style="color: gray;">Archivada</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- Archive/Reactivate Button -->
+                    {% if site.is_active %}
+                        <form action="{{ url_for('admin.archive_site', site_id=site.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn-base btn-archive" title="Archivar obra"><i class="fas fa-box-archive"></i></button>
+                        </form>
+                    {% else %}
+                        <form action="{{ url_for('admin.reactivate_site', site_id=site.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn-base btn-reactivate" title="Reactivar obra"><i class="fas fa-undo"></i></button>
+                        </form>
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- Delete Button -->
+                    <form action="{{ url_for('admin.delete_site', site_id=site.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn-base btn-delete" onclick="return confirm('¿Estás segura de que quieres eliminar esta obra?')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
+                <td>
+                    <!-- Edit Button (shows input + submit) -->
+                    <form action="{{ url_for('admin.edit_site', site_id=site.id) }}" method="POST" class="form-edit">
+                        <input type="text" name="new_name" value="{{ site.name }}" class="input-edit-name" required>
+                        <button type="submit" class="btn-base btn-edit" title="Guardar cambios"><i class="fas fa-save"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

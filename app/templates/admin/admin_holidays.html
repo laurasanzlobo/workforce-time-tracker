@@ -1,0 +1,76 @@
+<!-- File: app/templates/admin/admin_holidays.html -->
+<!-- Author: Laura Sanz Lobo -->
+ 
+{% extends "main/base.html" %}
+
+{% block header %}Gestionar Festivos{% endblock %}
+
+{% block extra_styles %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/admin_holidays.css') }}">
+  <!-- Iconos -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+  <main class="container">
+    <!-- Flash Messages -->
+    {% block flash_messages %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+    {% endblock %}
+
+    <!-- Form to add a new holiday -->
+    <section class="form-section">
+      <h2>Añadir Nuevo Festivo</h2>
+      <form action="{{ url_for('admin.admin_holidays') }}" method="POST">
+        <div class="form-group">
+          <label for="date"><i class="fas fa-calendar-alt"></i> Fecha del Festivo:</label>
+          <input type="text" id="date" name="date" class="flatpickr-date" required placeholder="dd-mm-aaaa">
+        </div>
+        <div class="form-group">
+          <label for="description"><i class="fas fa-edit"></i> Descripción:</label>
+          <input type="text" id="description" name="description" placeholder="..." >
+        </div>
+        <button type="submit" class="btn-add"><i class="fas fa-plus"></i> Añadir Festivo</button>
+      </form>
+    </section>
+
+    <hr>
+
+    <!-- Table of holidays -->
+    <section class="table-section">
+      <h2>Lista de Festivos</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Descripción</th>
+            <th>Eliminar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for holiday in holidays %}
+          <tr>
+            <td>{{ holiday.date.strftime('%d/%m/%Y') }}</td>
+            <td>{{ holiday.description }}</td>
+            <td>
+              <form action="{{ url_for('admin.delete_holiday', holiday_id=holiday.id) }}" method="POST">
+                <button type="submit" class="btn-delete" onclick="return confirm('¿Estás segura de eliminar este festivo?');">
+                  <i class="fas fa-trash"></i> Eliminar
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </main>
+{% endblock %}
