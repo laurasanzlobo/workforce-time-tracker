@@ -29,6 +29,11 @@
                class="btn-filter {% if current_filter == 'office' %}active{% endif %}">
                Oficina
             </a>
+
+            <a href="{{ url_for('admin.user_list_filter', worker_type='part_time') }}" 
+               class="btn-filter {% if current_filter == 'part_time' %}active{% endif %}">
+               Media Jornada
+            </a>
         </div>
 
         <div class="search-wrapper">

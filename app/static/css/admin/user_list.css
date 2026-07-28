@@ -41,7 +41,7 @@ th, td {
 }
 
 th {
-    background: #f59e0b;
+    background: #122668;
     color: white;
 }
 
@@ -56,7 +56,7 @@ tr:nth-child(odd) {
 /* Delete and edit action buttons */
 .btn-delete-edit {
   display: inline-block;       /* Equalizes behavior for <a> and <button> */
-  background: #f59e0b;
+  background: #122668;
   color: white;
   border: none;
   padding: 5px 10px;
@@ -69,7 +69,7 @@ tr:nth-child(odd) {
 }
 
 .btn-delete-edit:hover {
-    background: #c56e00;
+    background: #2575fc;
 }
 
 /* Modifier for the delete button */
@@ -216,13 +216,13 @@ td:nth-child(8), th:nth-child(8) {
 
 .btn-filter:hover {
     background-color: #e3f2fd;
-    border-color: #f59e0b;
+    border-color: #122668;
 }
 
 .btn-filter.active {
-    background-color: #f59e0b;
+    background-color: #122668;
     color: white;
-    border-color: #f59e0b;
+    border-color: #122668;
     font-weight: bold;
     box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
 }
@@ -257,14 +257,14 @@ td:nth-child(8), th:nth-child(8) {
 
 .search-input:focus {
     background-color: #fff;
-    border-color: #f59e0b; 
+    border-color: #122668; 
     box-shadow: 0 0 0 3px rgba(18, 38, 104, 0.1);
 }
 
 /* ============================================================
    TRANSFORMATION TO CARDS AND HEADER (MOBILE)
    ============================================================ */
-@media (max-width: 768px) {
+@media (max-width: 1130px) {
 
     /* --- 1. SEARCH BAR AND FILTERS ADJUSTMENTS --- */
     .filter-bar {
@@ -404,14 +404,14 @@ td:nth-child(8), th:nth-child(8) {
         width: 40%;
         text-align: left;
         font-weight: 700;
-        color: #f59e0b; 
+        color: #122668; 
         font-size: 13px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
 
     td:nth-child(1) {
-        background-color: #f59e0b;
+        background-color: #122668;
         color: white !important;
         text-align: center !important;
         padding: 12px !important;

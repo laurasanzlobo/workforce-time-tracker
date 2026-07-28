@@ -66,7 +66,7 @@ label {
 /* Icons */
 label i {
     margin-right: 8px;
-    color: #f59e0b;
+    color: #122668;
 }
 
 /* Input fields */
@@ -82,14 +82,14 @@ input[type="text"], input[type="password"] {
 
 /* Focus styles */
 input[type="text"]:focus, input[type="password"]:focus {
-    border-color: #f59e0b;
+    border-color: #122668;
     outline: none;
     box-shadow: 0 0 5px rgba(106, 17, 203, 0.5);
 }
 
 /* Login button */
 .btn-login {
-    background: #f59e0b;
+    background: #122668;
     color: white;
     padding: 10px 15px;
     font-size: 16px;
@@ -103,7 +103,7 @@ input[type="text"]:focus, input[type="password"]:focus {
 
 /* Hover effect */
 .btn-login:hover {
-    background: #c56e00;
+    background: #2575fc;
 }
 
 /* Responsive */

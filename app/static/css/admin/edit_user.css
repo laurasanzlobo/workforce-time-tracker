@@ -64,14 +64,14 @@
   font-size: inherit;
   border-radius: 5px;
   cursor: pointer;
-  background: #f59e0b;
+  background: #122668;
   color: white;
   border: none;
   transition: background 0.3s;
 }
 
 .btn:hover {
-  background: #c56e00;
+  background: #2575fc;
 }
 
 /* Checkbox style */
@@ -117,7 +117,7 @@
 /* Hover and focus effect for select */
 .select-group select:hover,
 .select-group select:focus {
-    border-color: #f59e0b;
+    border-color: #122668;
     outline: none;
     box-shadow: 0 0 5px rgba(37, 117, 252, 0.5);
 }

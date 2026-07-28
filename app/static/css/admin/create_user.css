@@ -92,7 +92,7 @@
 /* Hover and focus states for select field */
 .select-group select:hover,
 .select-group select:focus {
-    border-color: #f59e0b;
+    border-color: #122668;
     outline: none;
     box-shadow: 0 0 5px rgba(37, 117, 252, 0.5);
 }
