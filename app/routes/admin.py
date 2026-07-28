@@ -106,7 +106,7 @@ def create_user():
             flash(f"Error inesperado al crear usuario: {e}", "error")
             return redirect(url_for("admin.create_user"))
         
-    return render_template("admin/create_user.html")
+    return render_template("admin/form_user.html", user=None)
 
 
 @admin_bp.route("/admin/users/edit/<int:user_id>", methods=["GET", "POST"])
@@ -173,7 +173,7 @@ def edit_user(user_id):
             flash("Nombre de usuario duplicado.", "error")
             return redirect(request.url)
 
-    return render_template("admin/edit_user.html", user=user, back_url=back_url)
+    return render_template("admin/form_user.html", user=user, back_url=back_url)
 
 
 @admin_bp.route("/admin/users/delete/<int:user_id>", methods=["POST"])

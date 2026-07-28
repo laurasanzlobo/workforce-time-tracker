@@ -1,0 +1,221 @@
+/* File: app/static/css/admin/form_user.css */
+/* Author: Laura Sanz Lobo */
+
+/* --- RESET --- */
+* { box-sizing: border-box; }
+input:not([type="checkbox"]), select {
+    -webkit-appearance: none; appearance: none;
+}
+
+/* --- FORM CONTAINER --- */
+.form-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 440px;
+    margin: 30px auto 0 auto;
+}
+
+.form-container h2 {
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 20px;
+    color: #333;
+}
+
+/* --- GROUPS --- */
+.input-group, .select-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+/* Icon (always visible on the left) */
+.input-wrapper i.fa-solid:not(.btn-limpiar) {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #999;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* --- INPUTS & SELECTS --- */
+.input-wrapper input,
+.input-wrapper select {
+    width: 100%;
+    padding: 18px 10px 6px 45px; 
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #fff;
+    font-size: 16px; 
+    height: 52px;    
+    transition: border-color 0.3s;
+    color: #333;
+}
+
+.input-wrapper input:focus,
+.input-wrapper select:focus {
+    border-color: #122668;
+    outline: none;
+}
+
+/* --- FLOATING LABEL (THE MAGIC) --- */
+.input-wrapper label {
+    position: absolute;
+    left: 45px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 16px;
+    pointer-events: none;
+    transition: 0.2s ease all;
+    background-color: transparent;
+}
+
+/* Exception for static labels (e.g. Checkbox) */
+.checkbox-group label.static-label {
+    position: static;
+    transform: none;
+    color: #333;
+    pointer-events: auto;
+}
+
+/* --- WHEN TO FLOAT THE LABEL --- */
+
+/* 1. On Focus */
+.input-wrapper input:focus ~ label,
+.input-wrapper select:focus ~ label {
+    top: 10px;
+    font-size: 11px;
+    color: #122668;
+    font-weight: bold;
+}
+
+/* 2. Text inputs with content (Placeholder trick, excluding dates) */
+.input-wrapper input:not(.flatpickr-date):not(#start_date):not(#input_end_date):not(:placeholder-shown) ~ label {
+    top: 10px;
+    font-size: 11px;
+    color: #122668;
+    font-weight: bold;
+}
+
+/* 3. Dates and Selects (Triggered via 'has-value' JS class) */
+.input-wrapper .flatpickr-date.has-value ~ label,
+.input-wrapper #start_date.has-value ~ label,
+.input-wrapper #input_end_date.has-value ~ label,
+.input-wrapper select.has-value ~ label {
+    top: 10px;
+    font-size: 11px;
+    color: #122668;
+    font-weight: bold;
+}
+
+/* --- CHECKBOX --- */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-left: 5px;
+}
+.checkbox-group input {
+    width: 20px;
+    height: 20px;
+    accent-color: #122668;
+    cursor: pointer;
+}
+
+/* --- BUTTONS --- */
+.btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  background: #122668;
+  color: white;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  text-decoration: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background 0.3s;
+}
+
+.btn:hover { background: #0b1742; }
+.btn.cancel { background-color: #6c757d; }
+.btn.cancel:hover { background-color: #5a6268; }
+
+/* Clear date button */
+.btn-limpiar {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #dc3545;
+    z-index: 10;
+    padding: 10px;
+}
+
+/* ============================================================
+   MOBILE COMPACT VIEW
+   ============================================================ */
+@media (max-width: 480px) {
+
+    .form-container {
+        margin-top: 10px;       
+        padding: 15px 12px;     
+        width: 95%;             
+    }
+
+    .form-container h2 {
+        margin-bottom: 15px;    
+        font-size: 1.2rem;
+        margin-top: 0;
+    }
+
+    .input-group, 
+    .select-group {
+        margin-bottom: 10px;    
+    }
+
+    .checkbox-group {
+        margin-bottom: 15px;
+        margin-top: 5px;
+        padding: 8px;           
+    }
+
+    .input-wrapper input,
+    .input-wrapper select {
+        height: 46px; 
+        padding-top: 15px;      
+        padding-bottom: 5px;
+    }
+
+    /* Readjust floating label for new height */
+    .input-wrapper input:focus ~ label,
+    .input-wrapper select:focus ~ label,
+    .input-wrapper input:not(:placeholder-shown) ~ label,
+    .input-wrapper select.has-value ~ label {
+        top: 6px;               
+        font-size: 10px;        
+    }
+}
