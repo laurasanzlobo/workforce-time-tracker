@@ -1,0 +1,104 @@
+/* File: app/static/css/main/select_month.css */
+/* Author: Laura Sanz Lobo */
+
+/* 1. GENERAL STYLES & CONTAINER */
+.container {
+    width: 95%;
+    max-width: 800px;
+    background: white;
+    margin: 100px auto; 
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+/* 2. TITLE */
+h2 {
+    font-size: 22px;
+    color: #122668;
+    border-bottom: 3px solid #122668;
+    padding-bottom: 8px;
+    margin-top: 0;
+    margin-bottom: 25px;
+    display: block;
+    text-align: center;
+}
+
+/* 3. FORM */
+.form-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 15px;
+}
+
+label {
+    font-size: 14px;
+    margin-bottom: 8px;
+    display: block;
+    font-weight: bold;
+    color: #333;
+}
+
+input[type="text"],
+input[type="month"],
+input[type="number"],
+select {
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    display: block;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+/* Input Focus */
+input:focus,
+select:focus {
+    border-color: #122668; 
+    background-color: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(18, 38, 104, 0.2); 
+}
+
+#month {
+  text-align: center;
+}
+
+/* 4. MOBILE VIEW (ANTI-ZOOM FIX FOR IPHONE) */
+@media (max-width: 768px) {
+    
+    .container {
+        width: 100% !important;
+        padding: 15px !important;
+        box-shadow: none !important;
+    }
+
+    .form-container {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    /* Force large font size to prevent iOS zoom */
+    input, 
+    select, 
+    input[type="month"], 
+    input[type="number"] {
+        font-size: 16px !important; 
+        max-height: 50px; 
+    }
+
+    select {
+        padding: 12px;
+    }
+}

@@ -1,0 +1,106 @@
+<!-- File: app/templates/main/pdf_template.html -->
+<!-- Author: Laura Sanz Lobo -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe Mensual</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main/pdf_template.css') }}">
+</head>
+<body>
+
+    <!-- Header with Logo -->
+    <div class="header">
+        <img src="file://{{ logo_path }}" class="logo" alt="Logo de la empresa">
+        <h2>Informe Mensual - {{ month|replace('-', '/') }}</h2>
+    </div>
+
+
+    <!-- User Information -->
+    <div class="user-info">
+        <p><strong>Nombre:</strong> {{ user.full_name }}</p>
+        <p><strong>DNI:</strong> {{ user.national_id }}</p>
+    </div>
+
+    <!-- Records Table -->
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Entrada Mañana</th>
+                <th>Salida Mañana</th>
+                {% if is_site %}
+                  <th colspan="2">Obra</th>
+                {% elif not is_part_time %}
+                  <th>Entrada Tarde</th>
+                  <th>Salida Tarde</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+                {% set has_afternoon = (record.afternoon_in and record.afternoon_in.strftime('%H:%M') != '00:00')
+                  or (record.afternoon_out and record.afternoon_out.strftime('%H:%M') != '00:00') %}
+                {% set is_special = record.day_type in ['vacaciones', 'baja_medica', 'otros_motivos', 'festivo'] %}
+            <tr>
+              <td>{{ record.date.strftime("%d-%m-%Y") }}</td>
+              
+              {% if is_special %}
+                  {# ─── SPECIAL DAY: a single cell that spans the rest ─── #}
+                  {% set label = {
+                      'vacaciones': 'Vacaciones',
+                      'baja_medica': 'Baja médica',
+                      'otros_motivos': 'Otros motivos',
+                      'festivo': 'Festivo'
+                    }[record.day_type] %}
+                    
+                {% set colspan = 2 if is_part_time else 4 %}
+                <td colspan="{{ colspan }}" style="text-align:center;">
+                    {{ label }}
+                </td>
+              
+              {% else %}
+                <td>{{ record.morning_in.strftime("%H:%M") if record.morning_in else "--:--" }}</td>
+                <td>{{ record.morning_out.strftime("%H:%M") if record.morning_out else "--:--" }}</td>
+                
+                {% if is_site %}
+                    <td colspan="2">
+                      {{ record.site.name if record.site else '(sin obra)' }}
+                    </td>
+                {% else %}
+                    {% if has_afternoon %}
+                      <td>{{ record.afternoon_in.strftime('%H:%M') if record.afternoon_in else '--:--' }}</td>
+                      <td>{{ record.afternoon_out.strftime('%H:%M')  if record.afternoon_out  else '--:--' }}</td>
+                    {% else %}
+                      <td></td>
+                      <td></td>
+                    {% endif %}
+                {% endif %}
+              {% endif %}
+
+            </tr>
+          {% endfor %}
+            <!-- Total hours row -->
+            {% set colspan = 2 if is_part_time else 4 %}
+            <tr>
+                <td style="text-align: center; font-weight: bold;">Total de horas:</td>
+                <td colspan="{{ colspan }}"style="text-align: center;">{{ total_hours }} horas y {{ total_minutes }} minutos</td>
+            </tr>
+            
+
+        </tbody>
+    </table>
+
+    <!-- User Signature -->
+    <div class="firma-container">
+        <p><strong>Firmado:</strong></p>
+        <div class="firma-recuadro">
+            {% if signature_url %}
+                <img src="{{ signature_url }}" alt="Firma" class="firma-imagen">
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>

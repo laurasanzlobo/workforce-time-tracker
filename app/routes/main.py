@@ -9,14 +9,14 @@ Author: Laura Sanz Lobo
 import os
 import threading
 from datetime import datetime, date, timedelta
-from calendar import monthrange
+from calendar import month, monthrange
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, make_response, current_app
 from flask_mail import Message
 
 from app.extensions import db
 from app.models import User, Record, Holiday, Site, EmailConfig, OfficeConfig
 from app.utils import (
-    generate_pdf, send_async_email, get_current_date, sync_record_range
+    generate_pdf as build_monthly_pdf, send_async_email, get_current_date, sync_record_range
 )
 
 # Define the 'main' Blueprint
@@ -220,7 +220,7 @@ def generate_pdf():
 
     sync_record_range(target_user.id, sync_start_date, limit_date)
     
-    pdf_bytes = generate_pdf(target_user, month, year)
+    pdf_bytes = build_monthly_pdf(target_user, month, year)
     fname = f"Informe_{target_user.national_id}_{month:02d}_{year}.pdf"
 
     response = make_response(pdf_bytes)
@@ -271,7 +271,7 @@ def send_pdf():
 
     sync_record_range(target_user.id, sync_start_date, limit_date)
     
-    pdf_bytes = generate_pdf(target_user, month, year)
+    pdf_bytes = build_monthly_pdf(target_user, month, year)
 
     cfg = EmailConfig.query.first()
     if not cfg or not (cfg.sender_email and cfg.sender_password and cfg.destination_email):
@@ -350,4 +350,4 @@ def view_pdf():
     else:
         pdf_base = url_for('main.generate_pdf', month=month, year=year, t=t, _external=True)
 
-    return render_template('main/view_pdf.html', pdf_base=pdf_base)
+    return render_template('main/view_pdf.html', pdf_url=pdf_base)

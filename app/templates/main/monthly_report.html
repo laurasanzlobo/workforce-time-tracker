@@ -1,0 +1,115 @@
+<!-- File: app/templates/main/monthly_report.html -->
+<!-- Author: Laura Sanz Lobo -->
+
+{% extends "main/base.html" %}
+
+{% block title %}Informe {{ month_name }} {{ year }}{% endblock %}
+
+{% block extra_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main/monthly_report.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="informe-wrapper">
+
+    <div class="acciones-informe">
+        <a href="javascript:history.back()" class="btn-volver">
+            <i class="fa-solid fa-arrow-left"></i> Volver
+        </a>
+        <button onclick="window.print()" class="btn-print">
+            <i class="fa-solid fa-print"></i> Imprimir / Guardar PDF
+        </button>
+    </div>
+
+    <div class="hoja-a4">
+        
+        <div class="informe-header">
+            <h1>Registro Mensual de Jornada</h1>
+            <p>Periodo: <strong>{{ month_name }} {{ year }}</strong></p>
+        </div>
+
+        <div class="info-box">
+            <div class="info-col">
+                <strong>Trabajador:</strong> {{ user.full_name }} {{ user.last_name or '' }}<br>
+                <strong>DNI:</strong> {{ user.national_id }}<br>
+                <strong>Categoría:</strong> {{ user.worker_type|title }}
+            </div>
+            <div class="info-col" style="text-align:right;">
+                <strong>Empresa:</strong> NOMBRE EMPRESA S.L.<br>
+                <strong>CIF:</strong> B-12345678<br>
+                <strong>Centro:</strong> Granada
+            </div>
+        </div>
+
+        <table class="tabla-informe">
+            <thead>
+                <tr>
+                    <th width="12%">Fecha</th>
+                    <th width="12%">Entrada M.</th>
+                    <th width="12%">Salida M.</th>
+                    <th width="12%">Entrada T.</th>
+                    <th width="12%">Salida T.</th>
+                    <th>Obra / Observaciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                    {% set is_weekend = record.date.weekday() >= 5 %}
+                    {% set row_class = 'bg-finde' if is_weekend else '' %}
+
+                    <tr class="{{ row_class }}">
+                        <td>{{ record.date.strftime('%d/%m') }}</td>
+                        
+                        {% if record.morning_in %}
+                            <td>{{ record.morning_in.strftime('%H:%M') }}</td>
+                            <td>{{ record.morning_out.strftime('%H:%M') if record.morning_out else '-' }}</td>
+                        {% else %}
+                            <td>-</td><td>-</td>
+                        {% endif %}
+
+                        {% if record.afternoon_in %}
+                            <td>{{ record.afternoon_in.strftime('%H:%M') }}</td>
+                            <td>{{ record.afternoon_out.strftime('%H:%M') if record.afternoon_out else '-' }}</td>
+                        {% else %}
+                            <td>-</td><td>-</td>
+                        {% endif %}
+
+                        <td class="text-left">
+                            {% if record.site %}
+                                {{ record.site.name }}
+                            {% elif is_weekend %}
+                                Descanso
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="padding: 20px; font-style: italic;">
+                            No hay registros generados para este periodo.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="footer-totales">
+            <p><strong>Días trabajados:</strong> {{ days_worked }}</p>
+            <p><strong>Total Horas (estimado):</strong> {{ total_hours }} h</p>
+        </div>
+
+        <div class="area-firmas">
+            <div class="firma-box">
+                Firma de la Empresa
+            </div>
+            <div class="firma-box">
+                Firma del Trabajador<br>
+                <span style="color:#666; font-size:10px;">Fecha: {{ generation_date }}</span>
+            </div>
+        </div>
+
+    </div> 
+</div> 
+{% endblock %}

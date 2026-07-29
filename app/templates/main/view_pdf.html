@@ -1,0 +1,22 @@
+<!-- File: app/templates/main/view_pdf.html -->
+<!-- Author: Laura Sanz Lobo -->
+
+{% extends "main/base.html" %}
+{% block header %}Vista previa{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main/view_pdf.css') }}">
+{% endblock %}
+
+{% block content %}
+  <div class="pdf-wrap">
+    <iframe
+      class="pdf-frame"
+      src="{{ pdf_url }}#zoom=page-width"
+      allow="fullscreen">
+    </iframe>
+    <noscript>
+      Si no ves el PDF, abre <a href="{{ pdf_url }}" target="_blank" rel="noopener">este enlace</a>.
+    </noscript>
+  </div>
+{% endblock %}

@@ -1,0 +1,66 @@
+<!-- File: app/templates/main/select_month.html -->
+<!-- Author: Laura Sanz Lobo -->
+
+{% extends "main/base.html" %}
+
+{% block header %}Generar Informe Mensual{% endblock %}
+
+{% block extra_styles %}
+    <!-- Page styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main/select_month.css') }}">
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+    <!-- Flatpickr Month Select Plugin CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/plugins/monthSelect/style.css">
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
+    <!-- Flatpickr Month Select Plugin JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/plugins/monthSelect/index.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    {% set target = target_user if target_user else current_user %}
+    <!-- Flash Messages -->
+    {% block flash_messages %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-messages">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+    {% endblock %}
+    <h2>Selecciona un Mes</h2>
+    <form action="{{ url_for('main.process_pdf') }}" method="GET">
+      <input type="hidden" name="user_id" value="{{ target.id }}">
+
+      <div class="form-group">
+        <input type="text" id="month" name="month" required autocomplete="off">
+      </div>
+      <!-- Two buttons: one for preview and one to send -->
+      <div class="button-group">
+         <button type="submit" name="action" value="view" class="btn">Vista Previa</button>
+         <button type="submit" name="action" value="send" class="btn">Enviar por Correo</button>
+      </div>
+    </form>  
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    flatpickr('#month', {
+      locale: 'es',
+      disableMobile: true,
+      plugins: [ new monthSelectPlugin({
+        shorthand: false,           // "enero", "febrero", ...
+        dateFormat: 'm/Y',          // value sent to server -> 07/2025
+        altFormat: 'F Y'            // visible in the input -> Julio 2025
+      }) ]
+    });
+  });
+</script>
+{% endblock %}

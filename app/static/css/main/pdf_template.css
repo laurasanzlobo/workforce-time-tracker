@@ -1,0 +1,92 @@
+/* File: app/static/css/main/pdf_template.css */
+/* Author: Laura Sanz Lobo */
+
+/* Font and Spacing */
+body {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    margin: 0px;
+}
+
+/* Header */
+.header {
+  display: flex;            
+  align-items: center;       
+  justify-content: center;   
+  border-bottom: 2px solid #000;
+  margin-bottom: 0px;
+  padding-bottom: 10px;
+}
+
+/* Logo */
+.logo {
+  width: 80px;
+  margin-right: 20px;        
+}
+
+/* Title */
+.header h2 {
+  margin: 0;                 
+  font-size: 1.3rem;         
+}
+
+/* User Information */
+.user-info {
+    text-align: left;
+}
+
+/* Table */
+.table {
+    width: 90%; 
+    border-collapse: collapse;
+    margin-top: 20px;
+    margin-left: auto; 
+    margin-right: auto; 
+    table-layout: fixed; 
+}
+
+.table, .table th, .table td {
+    border: 1px solid black;
+    text-align: center;
+    padding: 6px 8px;
+    vertical-align: middle;
+}
+
+.table th, .table td {
+    width: 20%; 
+    word-wrap: break-word; 
+}
+
+.table th {
+    background: #f0f0f0;
+}
+
+.table td {
+    padding: 6px 8px;
+    text-align: center;
+    vertical-align: middle;
+    font-size: 10px;
+    font-style: normal;
+}
+
+/* Signature */
+.firma-container {
+    text-align: right;
+}
+
+.firma-recuadro {
+    width: 200px;
+    height: 80px;
+    border: 2px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.firma-imagen {
+    max-width: 195px;
+    max-height: 75px;
+    object-fit: contain;
+}
