@@ -85,7 +85,7 @@ Resuelve de forma nativa los descuidos habituales en los fichajes de obra (media
    Al ejecutar la aplicación por primera vez, el sistema creará automáticamente el archivo de base de datos (`instance/database.db`) y generará el usuario administrador inicial por defecto.
 
    ```bash
-   flask run
+   python3 run.py
    ```
 
 6. **Acceso Inicial al Sistema:**
