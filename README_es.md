@@ -12,6 +12,12 @@ Resuelve de forma nativa los descuidos habituales en los fichajes de obra (media
 
 ---
 
+## 📌 Estado del Proyecto y Adopción
+
+Actualmente, el sistema se encuentra **desplegado y en uso activo en producción por dos empresas corporativas del sector de la construcción**, gestionando diariamente el control horario de sus plantillas y automatizando la generación y auditoría de informes mensuales.
+
+---
+
 ## 🛠️ Características Principales
 
 ### 👨‍💻 Experiencia del Empleado

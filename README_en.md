@@ -12,6 +12,12 @@ It natively solves common field reporting issues (allowing retroactive entry for
 
 ---
 
+## 📌 Project Status & Adoption
+
+The system is currently **deployed and actively used in production across two corporate entities in the construction sector**, managing daily time tracking for their workforce and automating monthly report generation and auditing.
+
+---
+
 ## 🛠️ Key Features
 
 ### 👨‍💻 Employee Experience
