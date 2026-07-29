@@ -79,11 +79,16 @@ Resuelve de forma nativa los descuidos habituales en los fichajes de obra (media
    FLASK_APP=run.py
    FLASK_ENV=development
    SECRET_KEY=tu_clave_secreta
-   DATABASE_URL=sqlite:///app.db
    ```
 
 5. **Inicializar la base de datos y arrancar el servidor:**
+   Al ejecutar la aplicación por primera vez, el sistema creará automáticamente el archivo de base de datos (`instance/database.db`) y generará el usuario administrador inicial por defecto.
+
    ```bash
-   flask db upgrade
    flask run
    ```
+
+6. **Acceso Inicial al Sistema:**
+   Una vez iniciada la aplicación, accede desde el navegador (`http://127.0.0.1:5000`) utilizando las credenciales iniciales de administración:
+   * **Usuario:** `admin`
+   * **Contraseña:** `admin`
