@@ -2,6 +2,8 @@
 
 A custom-built web application designed for the mandatory digitalization of time tracking in construction companies. Specifically engineered to overcome technology adoption barriers and the digital divide among field staff, combining operational flexibility with strict compliance with labor regulations.
 
+[🇪🇸 Leer en español](README_es.md) | [🇬🇧 Read in English](README.md)
+
 ---
 
 ## 💡 Project Origin & Business Value

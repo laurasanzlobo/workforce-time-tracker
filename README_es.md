@@ -2,6 +2,8 @@
 
 Una solución web desarrollada a medida para la digitalización del control horario obligatorio en empresas del sector de la construcción. Diseñada específicamente para superar las barreras de adopción tecnológica y brecha digital en personal de obra, combinando flexibilidad operativa con el cumplimiento estricto de la normativa laboral.
 
+[🇪🇸 Leer en español](README_es.md) | [🇬🇧 Read in English](README.md)
+
 ---
 
 ## 💡 Origen del Proyecto y Valor de Negocio
